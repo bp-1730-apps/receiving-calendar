@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Receiving Calendar</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Supabase JS client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- ── Modal Overlay ─────────────────────────────── -->
+  <div id="modal-overlay" class="modal-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title" class="modal-heading">New Delivery</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      </div>
+
+      <form class="modal-form" id="event-form" novalidate>
+        <input type="hidden" id="event-id" />
+
+        <!-- Vendor Name -->
+        <div class="form-group">
+          <label for="event-vendor">Vendor Name</label>
+          <input type="text" id="event-vendor" placeholder="e.g. Sysco Foods" autocomplete="off" required />
+        </div>
+
+        <!-- PO# + Location side by side -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="event-po">PO #</label>
+            <input type="text" id="event-po" placeholder="e.g. 45231" autocomplete="off" required />
+          </div>
+          <div class="form-group">
+            <label for="event-location">Location</label>
+            <select id="event-location" required>
+              <option value="Buena Park">Buena Park</option>
+              <option value="Cerritos">Cerritos</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Return toggle -->
+        <div class="return-toggle-row">
+          <label class="return-toggle-label" for="event-is-return">
+            <input type="checkbox" id="event-is-return" class="return-checkbox" />
+            <span class="return-toggle-track">
+              <span class="return-toggle-thumb"></span>
+            </span>
+            <span class="return-toggle-text">This is a <strong>return</strong></span>
+          </label>
+        </div>
+
+        <!-- Arrival window -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="event-start">Expected Arrival</label>
+            <input type="datetime-local" id="event-start" required />
+          </div>
+          <div class="form-group">
+            <label for="event-end">Est. Completion</label>
+            <input type="datetime-local" id="event-end" required />
+          </div>
+        </div>
+
+        <!-- Location color legend inside form -->
+        <div class="location-legend">
+          <span class="legend-dot" style="--dot:#4F63E8"></span><span>Buena Park</span>
+          <span class="legend-dot" style="--dot:#27AE7A; margin-left:14px"></span><span>Cerritos</span>
+          <span class="legend-dot" style="--dot:#E07C3A; margin-left:14px"></span><span>Return</span>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-danger" id="delete-event" style="display:none">Delete</button>
+          <div class="modal-actions-right">
+            <button type="button" class="btn-ghost" id="cancel-event">Cancel</button>
+            <button type="submit" class="btn-primary">Save Delivery</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── App Shell ──────────────────────────────────── -->
+  <div class="app">
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <span class="brand-mark" aria-hidden="true">◈</span>
+        <span class="brand-name">Luis Andrade</span>
+        <span class="brand-sub">Receiving</span>
+      </div>
+
+      <div class="header-nav">
+        <div class="nav-controls">
+          <button class="nav-btn" id="prev-btn" aria-label="Previous period">‹</button>
+          <button class="nav-today" id="today-btn">Today</button>
+          <button class="nav-btn" id="next-btn" aria-label="Next period">›</button>
+        </div>
+        <h1 class="current-period" id="current-period" aria-live="polite"></h1>
+      </div>
+
+      <div class="header-right">
+        <!-- Location legend -->
+        <div class="header-legend" aria-label="Location color key">
+          <span class="legend-dot" style="--dot:#4F63E8"></span><span class="legend-label">Buena Park</span>
+          <span class="legend-dot" style="--dot:#27AE7A"></span><span class="legend-label">Cerritos</span>
+          <span class="legend-dot" style="--dot:#E07C3A"></span><span class="legend-label">Return</span>
+        </div>
+
+        <nav class="view-switcher" aria-label="Calendar view">
+          <button class="view-btn active" data-view="month" aria-pressed="true">Month</button>
+          <button class="view-btn" data-view="week" aria-pressed="false">Week</button>
+          <button class="view-btn" data-view="day" aria-pressed="false">Day</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Upcoming Deliveries Bar -->
+    <section class="upcoming-bar" aria-label="Upcoming deliveries">
+      <div class="upcoming-label">
+        <span class="upcoming-icon" aria-hidden="true">◷</span>
+        <span>Upcoming</span>
+      </div>
+      <div class="upcoming-scroll" id="upcoming-scroll" role="list" aria-label="Upcoming delivery chips">
+        <div class="upcoming-events" id="upcoming-events"></div>
+      </div>
+      <button class="add-event-btn" id="add-event-btn" aria-label="Log new delivery">
+        <span aria-hidden="true">+</span> New Delivery
+      </button>
+    </section>
+
+    <!-- Calendar Main Area -->
+    <main class="calendar-container" id="calendar-container" aria-label="Receiving calendar grid"></main>
+
+    <!-- Loading overlay -->
+    <div class="db-overlay" id="db-loading" aria-live="polite" style="display:none">
+      <div class="db-overlay-box">
+        <div class="db-spinner"></div>
+        <p>Loading deliveries…</p>
+      </div>
+    </div>
+
+    <!-- Error overlay -->
+    <div class="db-overlay" id="db-error" style="display:none">
+      <div class="db-overlay-box db-overlay-error">
+        <span class="db-error-icon">⚠</span>
+        <p id="db-error-msg">Could not connect to database.</p>
+        <button class="btn-primary" id="db-retry-btn">Retry</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
