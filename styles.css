@@ -980,7 +980,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   cursor: pointer;
   overflow: hidden;
   border-left: 4px solid var(--ev-border);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 2px solid var(--ev-border);
   background: rgba(18, 10, 8, 0.92);
   color: var(--text-0);
   z-index: 1;
