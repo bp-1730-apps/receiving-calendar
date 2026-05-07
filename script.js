@@ -442,7 +442,7 @@ function makeTimeEventEl(event, lane, totalLanes) {
   el.style.left  = 'calc(' + leftPct + '% + 2px)';
   el.style.right = 'calc(' + (100 - leftPct - widthPct) + '% + 2px)';
   el.style.setProperty('--ev-border', event.color);
-  el.style.setProperty('--ev-bg',     hexAlpha(event.color, 0.18));
+  el.style.setProperty('--ev-bg',     hexAlpha(event.color, 0.82));
 
   var showTime   = height >= 34;
   var showPO     = height >= 48;
@@ -478,7 +478,6 @@ var Modal = (function() {
   var locIn     = document.getElementById('event-location');
   var returnIn  = document.getElementById('event-is-return');
   var startIn   = document.getElementById('event-start');
-  var endIn     = document.getElementById('event-end');
   var closeBtn  = document.getElementById('modal-close');
   var cancelBtn = document.getElementById('cancel-event');
   var deleteBtn = document.getElementById('delete-event');
@@ -493,7 +492,6 @@ var Modal = (function() {
     var is_return   = opts.is_return   || false;
     var now         = new Date();
     var start_iso   = opts.start_iso   || toLocalDT(now, now.getHours() + 1, 0);
-    var end_iso     = opts.end_iso     || toLocalDT(now, now.getHours() + 3, 0);
 
     heading.textContent     = id ? 'Edit Delivery' : 'New Delivery';
     idInput.value           = id || '';
@@ -502,7 +500,6 @@ var Modal = (function() {
     locIn.value             = location;
     returnIn.checked        = is_return;
     startIn.value           = start_iso;
-    endIn.value             = end_iso;
     deleteBtn.style.display = id ? 'inline-flex' : 'none';
     setWorking(false);
 
@@ -528,13 +525,15 @@ var Modal = (function() {
 
   function save() {
     var id    = idInput.value;
-    var start = parseLocalDT(startIn.value);
-    var end   = parseLocalDT(endIn.value);
 
     if (!vendorIn.value.trim()) { alert('Please enter a vendor name.'); vendorIn.focus(); return; }
     if (!poIn.value.trim())     { alert('Please enter a PO number.');   poIn.focus();    return; }
-    if (!startIn.value || !endIn.value) { alert('Please fill in arrival and completion times.'); return; }
-    if (end <= start) { alert('Est. completion must be after the arrival time.'); endIn.focus(); return; }
+    if (!startIn.value)         { alert('Please fill in the arrival time.'); return; }
+
+    /* End time is always exactly 1 hour after arrival */
+    var startDate = parseLocalDT(startIn.value);
+    var endDate   = new Date(startDate.getTime() + 60 * 60 * 1000);
+    var end_iso   = toLocalDT(endDate);
 
     var data = {
       vendor_name: vendorIn.value.trim(),
@@ -542,7 +541,7 @@ var Modal = (function() {
       location:    locIn.value,
       is_return:   returnIn.checked,
       start_iso:   startIn.value,
-      end_iso:     endIn.value
+      end_iso:     end_iso
     };
 
     setWorking(true);
