@@ -68,37 +68,33 @@ html, body { height: 100%; overflow: hidden; }
 
 body {
   font-family: var(--font-body);
-  background: var(--ink-1);
+  background: url('background.png') center center / cover no-repeat fixed;
+  background-color: #07040A;
   color: var(--text-0);
   font-size: 14px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Dense asanoha-inspired diamond grid */
+/* Subtle dark vignette so text stays readable over the image */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image:
-    repeating-linear-gradient(45deg,  rgba(192,136,8,0.028) 0px, rgba(192,136,8,0.028) 1px, transparent 1px, transparent 14px),
-    repeating-linear-gradient(-45deg, rgba(192,136,8,0.028) 0px, rgba(192,136,8,0.028) 1px, transparent 1px, transparent 14px),
-    repeating-linear-gradient(0deg,   rgba(192,136,8,0.018) 0px, rgba(192,136,8,0.018) 1px, transparent 1px, transparent 14px),
-    repeating-linear-gradient(90deg,  rgba(192,136,8,0.018) 0px, rgba(192,136,8,0.018) 1px, transparent 1px, transparent 14px);
-  background-size: 14px 14px;
+  background: rgba(0, 0, 0, 0.42);
   pointer-events: none;
   z-index: 0;
 }
 
-/* Large-scale secondary overlay */
+/* Faint gold diagonal pattern on top — keeps the "busy" samurai texture */
 body::after {
   content: '';
   position: fixed;
   inset: 0;
   background-image:
-    repeating-linear-gradient(45deg,  rgba(176,18,18,0.015) 0px, rgba(176,18,18,0.015) 1px, transparent 1px, transparent 56px),
-    repeating-linear-gradient(-45deg, rgba(176,18,18,0.015) 0px, rgba(176,18,18,0.015) 1px, transparent 1px, transparent 56px);
-  background-size: 56px 56px;
+    repeating-linear-gradient(45deg,  rgba(192,136,8,0.03) 0px, rgba(192,136,8,0.03) 1px, transparent 1px, transparent 20px),
+    repeating-linear-gradient(-45deg, rgba(192,136,8,0.03) 0px, rgba(192,136,8,0.03) 1px, transparent 1px, transparent 20px);
+  background-size: 20px 20px;
   pointer-events: none;
   z-index: 0;
 }
@@ -113,6 +109,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   overflow: hidden;
   position: relative;
   z-index: 1;
+  background: transparent;
 }
 
 /* ════════════════════════════════════════════════════
@@ -123,13 +120,15 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: var(--ink-2);
+  background: rgba(8, 4, 6, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border-bottom: 3px solid var(--crimson);
   position: relative;
   z-index: 100;
   box-shadow:
     inset 0 3px 0 0 var(--gold),
-    inset 0 6px 0 0 var(--ink-2),
+    inset 0 6px 0 0 rgba(8,4,6,0.6),
     inset 0 7px 0 0 rgba(192,136,8,0.25),
     0 4px 0 0 rgba(176,18,18,0.4),
     0 6px 18px rgba(0,0,0,0.6);
@@ -366,7 +365,9 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 .upcoming-bar {
   display: flex;
   align-items: center;
-  background: var(--ink-0);
+  background: rgba(5, 2, 4, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   position: relative;
   overflow: hidden;
   border-top: 1px solid var(--bdr-gold);
@@ -638,7 +639,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: var(--ink-1);
+  background: transparent;
   position: relative;
   z-index: 1;
 }
@@ -659,11 +660,13 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 .month-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  background: var(--ink-2);
+  background: rgba(8, 4, 6, 0.80);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   flex-shrink: 0;
   border-bottom: 3px solid var(--crimson);
   box-shadow:
-    inset 0 -5px 0 var(--ink-2),
+    inset 0 -5px 0 rgba(8,4,6,0.5),
     inset 0 -6px 0 var(--bdr-gold-2),
     0 3px 12px rgba(0,0,0,0.6);
 }
@@ -697,7 +700,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   grid-template-columns: repeat(7, 1fr);
   flex: 1;
   overflow: hidden;
-  background: var(--bdr-cell);
+  background: rgba(192,136,8,0.10);
   gap: 1px;
 }
 
@@ -706,7 +709,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 .month-grid[data-rows="6"] { grid-template-rows: repeat(6, 1fr); }
 
 .month-cell {
-  background: var(--ink-3);
+  background: rgba(46, 32, 24, 0.72);
   padding: 6px 7px 5px;
   overflow: hidden;
   cursor: pointer;
@@ -734,9 +737,9 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   pointer-events: none;
 }
 
-.month-cell:hover { background: var(--ink-4); }
-.month-cell.other-month { background: var(--ink-1); opacity: 0.6; }
-.month-cell.today { background: rgba(176,18,18,0.08); }
+.month-cell:hover { background: rgba(60, 43, 32, 0.85); }
+.month-cell.other-month { background: rgba(10, 6, 8, 0.55); opacity: 0.7; }
+.month-cell.today { background: rgba(176, 18, 18, 0.22); }
 
 .month-cell.today::after {
   content: '';
@@ -827,11 +830,13 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 .week-header {
   display: grid;
   grid-template-columns: 56px repeat(7, 1fr);
-  background: var(--ink-2);
+  background: rgba(8, 4, 6, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   flex-shrink: 0;
   border-bottom: 3px solid var(--crimson);
   box-shadow:
-    inset 0 -5px 0 var(--ink-2),
+    inset 0 -5px 0 rgba(8,4,6,0.5),
     inset 0 -6px 0 var(--bdr-gold-2),
     0 4px 14px rgba(0,0,0,0.6);
 }
@@ -886,7 +891,9 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 .day-time-axis {
   border-right: 1px solid var(--bdr-gold-2);
   box-shadow: 2px 0 0 var(--bdr-gold-3);
-  background: var(--ink-2);
+  background: rgba(10, 6, 8, 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   flex-shrink: 0;
 }
 
@@ -915,12 +922,12 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 .week-day-col {
   border-right: 1px solid var(--bdr-gold-3);
   position: relative;
-  background: var(--ink-3);
+  background: rgba(46, 32, 24, 0.65);
 }
 
 .week-day-col:last-child { border-right: none; }
 
-.week-day-col.is-today { background: rgba(176,18,18,0.09); }
+.week-day-col.is-today { background: rgba(176, 18, 18, 0.18); }
 
 .week-day-col::before {
   content: '';
@@ -1052,10 +1059,12 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 
 .day-header {
   padding: 14px 24px;
-  background: var(--ink-2);
+  background: rgba(8, 4, 6, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 3px solid var(--crimson);
   box-shadow:
-    inset 0 -5px 0 var(--ink-2),
+    inset 0 -5px 0 rgba(8,4,6,0.5),
     inset 0 -6px 0 var(--bdr-gold-2),
     inset 0 3px 0 var(--bdr-gold-2),
     0 4px 14px rgba(0,0,0,0.6);
@@ -1092,7 +1101,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 
 .day-grid {
   position: relative;
-  background: var(--ink-3);
+  background: rgba(46, 32, 24, 0.65);
 }
 
 .day-grid .hour-cell { border-bottom: 1px solid var(--bdr-cell); }
@@ -1117,7 +1126,9 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 .modal-overlay.open { opacity: 1; pointer-events: all; }
 
 .modal {
-  background: var(--ink-2);
+  background: rgba(18, 12, 10, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   width: 500px;
   max-width: calc(100vw - 32px);
   max-height: 90vh;
@@ -1128,9 +1139,9 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   position: relative;
   border: 1px solid var(--bdr-gold);
   box-shadow:
-    0 0 0 3px var(--ink-0),
+    0 0 0 3px rgba(0,0,0,0.6),
     0 0 0 5px var(--bdr-red),
-    0 0 0 6px var(--ink-0),
+    0 0 0 6px rgba(0,0,0,0.6),
     0 0 0 7px var(--bdr-gold-2),
     0 24px 60px rgba(0,0,0,0.85);
 }
