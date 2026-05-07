@@ -68,12 +68,8 @@
           </div>
         </div>
 
-        <!-- Location color legend inside form -->
-        <div class="location-legend">
-          <span class="legend-dot" style="--dot:#B01212"></span><span>Buena Park</span>
-          <span class="legend-dot" style="--dot:#2E7FD4; margin-left:14px"></span><span>Cerritos</span>
-          <span class="legend-dot" style="--dot:#D4920A; margin-left:14px"></span><span>Return</span>
-        </div>
+        <!-- Legend rendered by script.js from the same color constants as events -->
+        <div class="location-legend" id="modal-legend"></div>
 
         <div class="modal-actions">
           <button type="button" class="btn-danger" id="delete-event" style="display:none">Delete</button>
@@ -107,12 +103,8 @@
       </div>
 
       <div class="header-right">
-        <!-- Location legend -->
-        <div class="header-legend" aria-label="Location color key">
-          <span class="legend-dot" style="--dot:#B01212"></span><span class="legend-label">Buena Park</span>
-          <span class="legend-dot" style="--dot:#2E7FD4"></span><span class="legend-label">Cerritos</span>
-          <span class="legend-dot" style="--dot:#D4920A"></span><span class="legend-label">Return</span>
-        </div>
+        <!-- Legend is rendered by script.js from the same color constants as events -->
+        <div class="header-legend" id="header-legend" aria-label="Location color key"></div>
 
         <nav class="view-switcher" aria-label="Calendar view">
           <button class="view-btn active" data-view="month" aria-pressed="true">Month</button>
