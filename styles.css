@@ -76,12 +76,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Subtle dark vignette so text stays readable over the image */
+/* Stronger dark vignette so calendar text pops over the image */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.42);
+  background: rgba(15, 15, 15, 0.60);
   pointer-events: none;
   z-index: 0;
 }
@@ -639,7 +639,9 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: transparent;
+  background: rgba(10, 5, 5, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   position: relative;
   z-index: 1;
 }
@@ -739,7 +741,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 
 .month-cell:hover { background: rgba(60, 43, 32, 0.85); }
 .month-cell.other-month { background: rgba(10, 6, 8, 0.55); opacity: 0.7; }
-.month-cell.today { background: rgba(176, 18, 18, 0.22); }
+.month-cell.today { background: rgba(176, 18, 18, 0.12); }
 
 .month-cell.today::after {
   content: '';
@@ -752,9 +754,10 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 
 .cell-date {
   font-family: var(--font-number);
-  font-size: 12px;
-  font-weight: 400;
-  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-0);
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
   width: 24px;
   height: 24px;
   display: flex;
@@ -767,9 +770,10 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 
 .month-cell.today .cell-date {
   background: var(--crimson);
-  color: var(--text-0);
-  font-weight: 600;
+  color: #ffffff;
+  font-weight: 700;
   box-shadow: 0 0 10px rgba(176,18,18,0.5);
+  text-shadow: none;
 }
 
 .cell-events {
@@ -787,10 +791,10 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   align-items: center;
   gap: 5px;
   padding: 2px 6px;
-  background: var(--pill-bg);
-  color: var(--pill-color);
+  background: rgba(18, 10, 8, 0.90);
+  color: var(--text-0);
   border-left: 3px solid var(--pill-dot);
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.05);
   font-family: var(--font-body);
   font-size: 11px;
   font-weight: 600;
@@ -799,7 +803,8 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   text-overflow: ellipsis;
   cursor: pointer;
   transition: filter var(--t-fast);
-  box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.85);
 }
 
 .cell-event-pill::before {
@@ -863,20 +868,22 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   font-size: 8px;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--text-2);
+  color: var(--text-1);
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
 }
 
 .week-day-num {
   font-family: var(--font-number);
   font-size: 26px;
   font-weight: 400;
-  color: var(--text-1);
+  color: var(--text-0);
   line-height: 1.2;
   margin-top: 1px;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
 }
 
-.week-header-day.today .week-day-name { color: var(--crimson-mid); }
-.week-header-day.today .week-day-num { color: var(--crimson-light); text-shadow: 0 0 14px rgba(176,18,18,0.5); }
+.week-header-day.today .week-day-name { color: var(--crimson-mid); text-shadow: 0 0 8px rgba(176,18,18,0.5); }
+.week-header-day.today .week-day-num  { color: var(--crimson-light); text-shadow: 0 0 14px rgba(176,18,18,0.5), 1px 1px 3px rgba(0,0,0,0.9); }
 
 .week-scroll {
   overflow-y: auto;
@@ -905,13 +912,15 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   padding: 0 10px;
   font-family: var(--font-number);
   font-size: 9.5px;
-  color: var(--text-3);
+  color: var(--text-1);
   position: relative;
   top: -7px;
   letter-spacing: 0.04em;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.95);
+  font-weight: 500;
 }
 
-.time-label:first-child { color: transparent; }
+.time-label:first-child { color: transparent; text-shadow: none; }
 
 .week-grid {
   display: grid;
@@ -927,7 +936,7 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 
 .week-day-col:last-child { border-right: none; }
 
-.week-day-col.is-today { background: rgba(176, 18, 18, 0.18); }
+.week-day-col.is-today { background: rgba(255, 255, 255, 0.05); }
 
 .week-day-col::before {
   content: '';
@@ -966,18 +975,18 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
 /* ── Time-grid events ─────────────────────────────── */
 .tg-event {
   position: absolute;
-  padding: 4px 6px;
+  padding: 4px 7px;
   font-size: 11px;
   cursor: pointer;
   overflow: hidden;
   border-left: 4px solid var(--ev-border);
-  border-top: 1px solid rgba(255,255,255,0.06);
-  background: var(--ev-bg);
-  color: var(--ev-border);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(18, 10, 8, 0.92);
+  color: var(--text-0);
   z-index: 1;
   user-select: none;
   transition: filter var(--t-fast);
-  box-shadow: inset 0 0 14px rgba(0,0,0,0.55), inset 1px 0 0 rgba(255,255,255,0.04);
+  box-shadow: 0px 4px 6px rgba(0,0,0,0.55), inset 1px 0 0 rgba(255,255,255,0.05);
 }
 
 .tg-event::before {
@@ -986,16 +995,16 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   inset: 0;
   background: repeating-linear-gradient(
     45deg,
-    rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px,
+    rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px,
     transparent 1px, transparent 12px
   );
   pointer-events: none;
 }
 
 .tg-event:hover {
-  filter: brightness(1.3);
+  filter: brightness(1.25);
   z-index: 20;
-  box-shadow: inset 0 0 14px rgba(0,0,0,0.3), 0 0 16px rgba(0,0,0,0.4);
+  box-shadow: 0px 6px 12px rgba(0,0,0,0.7), inset 1px 0 0 rgba(255,255,255,0.05);
 }
 
 .tg-event-title {
@@ -1007,25 +1016,32 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
   text-overflow: ellipsis;
   position: relative;
   z-index: 1;
+  color: var(--text-0);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.85);
 }
 
 .tg-event-time {
   font-family: var(--font-number);
-  font-size: 9px;
-  opacity: 0.65;
+  font-size: 9.5px;
+  opacity: 0.80;
   margin-top: 1px;
   position: relative;
   z-index: 1;
+  color: var(--text-0);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.85);
+  font-weight: 500;
 }
 
 .tg-return-badge {
   font-family: var(--font-body);
   font-style: italic;
   font-size: 9px;
-  opacity: 0.8;
+  opacity: 0.85;
   margin-top: 1px;
   position: relative;
   z-index: 1;
+  color: var(--honor-light);
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.85);
 }
 
 /* ── Now line ─────────────────────────────────────── */
