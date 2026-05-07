@@ -587,13 +587,11 @@ function buildChip(ev, now) {
   chip.setAttribute('role', 'button');
   chip.setAttribute('tabindex', '0');
 
-  chip.style.cssText = [
-    '--chip-color:' + ev.color,
-    'min-width:' + minW + 'px',
-    'max-width:' + maxW + 'px',
-    'padding:' + padV + 'px 10px ' + padV + 'px 12px',
-    'border-left-width:' + borderW + 'px'
-  ].join(';');
+  chip.style.setProperty('--chip-color', ev.color);
+  chip.style.minWidth      = minW + 'px';
+  chip.style.maxWidth      = maxW + 'px';
+  chip.style.padding       = padV + 'px 10px ' + padV + 'px 12px';
+  chip.style.borderLeftWidth = borderW + 'px';
 
   var timeStr;
   if (minutesUntil < 1440) {
