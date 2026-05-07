@@ -11,6 +11,38 @@ var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSI
 var db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ════════════════════════════════════════════════
+   LEGEND RENDERER
+   Builds both the header legend and modal legend
+   directly from LOCATION_COLOR + RETURN_COLOR so
+   they are always identical to the event colors.
+════════════════════════════════════════════════ */
+
+function renderLegend() {
+  var entries = [
+    { label: 'Buena Park', color: LOCATION_COLOR['Buena Park'] },
+    { label: 'Cerritos',   color: LOCATION_COLOR['Cerritos']   },
+    { label: 'Return',     color: RETURN_COLOR                  }
+  ];
+
+  function buildDots(isModal) {
+    var html = '';
+    for (var i = 0; i < entries.length; i++) {
+      var e      = entries[i];
+      var margin = (i > 0 && !isModal) ? ' style="margin-left:14px"' : '';
+      html +=
+        '<span class="legend-dot" style="--dot:' + e.color + ';background:' + e.color + '"' + margin + '></span>' +
+        '<span class="' + (isModal ? '' : 'legend-label') + '">' + e.label + '</span>';
+    }
+    return html;
+  }
+
+  var headerEl = document.getElementById('header-legend');
+  var modalEl  = document.getElementById('modal-legend');
+  if (headerEl) headerEl.innerHTML = buildDots(false);
+  if (modalEl)  modalEl.innerHTML  = buildDots(true);
+}
+
+/* ════════════════════════════════════════════════
    §1 · DATE UTILITIES
 ════════════════════════════════════════════════ */
 
@@ -1020,6 +1052,7 @@ function navigate(dir) {
 
 (function init() {
   State.subscribe(render);
+  renderLegend();
   render();
 
   State.load().then(function(ok) {
