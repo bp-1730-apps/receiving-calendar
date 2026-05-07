@@ -157,7 +157,7 @@ var RETURN_COLOR = '#D4920A';
 
 var LOCATION_COLOR = {
   'Buena Park': '#B01212',
-  'Cerritos':   '#1A3860'
+  'Cerritos':   '#2E7FD4'
 };
 
 function colorForLocation(loc) {
