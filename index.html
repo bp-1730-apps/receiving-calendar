@@ -1,1253 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-<title>Cerritos Count — 17AG</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --amber:#B87C20;--amber-dk:#9A6816;--amber-lt:#F5E4C3;
-  --bg:#F2F1EE;--surf:#FFF;--surf2:#EDEDEA;
-  --brd:rgba(0,0,0,.09);--brdm:rgba(0,0,0,.16);
-  --tx:#1A1A18;--tx2:#6B6B67;--tx3:#A8A8A4;
-  --ok:#2A7A3B;--ok-bg:#E8F3DA;
-  --bad:#A32D2D;--bad-bg:#FCEBEB;
-  --info:#185FA5;--info-bg:#E4F0FB;
-  --warn:#7A5200;--warn-bg:#FFF5D0;
-  --mm:#C75000;--mm-bg:#FFF0E5;
-  --or:#7B1FA2;--or-bg:#F5E5FF;
-  --dm:#5C5200;--dm-bg:#FFFACC;
-  --em:#1A6B6B;--em-bg:#E0F5F5;
-  --mono:'Courier New',monospace;
-  --rsm:6px;--rmd:10px;--rlg:14px;
-  --th:52px;--tbh:56px;
-}
-@media(prefers-color-scheme:dark){:root{
-  --bg:#1A1A18;--surf:#232321;--surf2:#2C2C2A;
-  --brd:rgba(255,255,255,.09);--brdm:rgba(255,255,255,.16);
-  --tx:#E6E6E2;--tx2:#9A9A96;--tx3:#686866;
-  --amber-lt:#3A2E12;--ok-bg:#152A12;--bad-bg:#280E0E;
-  --info-bg:#0B2240;--warn-bg:#2A1E06;
-  --mm-bg:#2A1200;--or-bg:#1C0828;--dm-bg:#282400;--em-bg:#082828;
-}}
-html,body{height:100%}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
-  font-size:15px;background:var(--bg);color:var(--tx);-webkit-text-size-adjust:100%;line-height:1.5}
-input[type=text],input[type=number]{
-  width:100%;height:46px;padding:0 12px;background:var(--surf);
-  border:1.5px solid var(--brdm);border-radius:var(--rsm);
-  font-size:16px;color:var(--tx);font-family:inherit;outline:none;
-  -webkit-appearance:none;appearance:none;transition:border-color .15s,box-shadow .15s}
-input:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(184,124,32,.14)}
-input[type=number]{text-align:right;font-family:var(--mono)}
-/* ── Setup ── */
-#setup{display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:1.5rem}
-.scard{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rlg);
-  padding:2rem;width:100%;max-width:400px;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-.sicon{width:46px;height:46px;background:var(--amber-lt);border-radius:var(--rmd);
-  display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem}
-.stitle{font-size:20px;font-weight:700;margin-bottom:.3rem}
-.ssub{font-size:13px;color:var(--tx2);margin-bottom:1.5rem;line-height:1.6}
-.flbl{display:block;font-size:11px;font-weight:700;text-transform:uppercase;
-  letter-spacing:.07em;color:var(--tx3);margin-bottom:6px}
-.hr{height:1px;background:var(--brd);margin:1.5rem 0}
-.dropzone{border:1.5px dashed var(--brdm);border-radius:var(--rmd);
-  padding:1.5rem;text-align:center;cursor:pointer;position:relative;transition:border-color .15s,background .15s}
-.dropzone:hover,.dropzone.over{border-color:var(--amber);background:var(--amber-lt)}
-.dropzone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.drop-ico{width:36px;height:36px;margin:0 auto .5rem;color:var(--tx3)}
-.drop-p{font-size:14px;font-weight:500;color:var(--tx2);margin-bottom:2px}
-.drop-s{font-size:12px;color:var(--tx3)}
-.mstatus{border-radius:var(--rmd);padding:.75rem 1rem;font-size:13px;
-  display:flex;align-items:flex-start;gap:10px;margin-top:.85rem}
-.mstatus.loading{background:var(--surf2)}.mstatus.ready{background:var(--ok-bg)}
-.mstatus.error{background:var(--bad-bg)}.mstatus.parsed{background:var(--info-bg)}
-.ms-ico{width:18px;height:18px;flex-shrink:0;margin-top:1px}
-.ms-title{font-weight:700;margin-bottom:2px}
-.ms-title.ready{color:var(--ok)}.ms-title.error{color:var(--bad)}.ms-title.parsed{color:var(--info)}
-.ms-sub{font-size:12px;color:var(--tx2);line-height:1.5}
-@keyframes spin{to{transform:rotate(360deg)}}
-.spinner{width:16px;height:16px;border:2px solid var(--brdm);border-top-color:var(--amber);
-  border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-.btn-p{width:100%;height:50px;background:var(--amber);color:#fff;border:none;
-  border-radius:var(--rsm);font-size:16px;font-weight:700;cursor:pointer;margin-top:1.25rem;
-  transition:background .15s;-webkit-tap-highlight-color:transparent}
-.btn-p:hover{background:var(--amber-dk)}.btn-p:disabled{background:var(--surf2);color:var(--tx3);cursor:not-allowed}
-/* ── App shell ── */
-#app{display:none;display:none}
-.topbar{position:sticky;top:0;z-index:200;height:var(--th);background:var(--surf);
-  border-bottom:1px solid var(--brd);padding:0 1rem;display:flex;align-items:center;gap:.75rem}
-.topbar-title{font-size:15px;font-weight:700;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.topbar-meta{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--tx3);flex-shrink:0;transition:background .3s}
-.dot.live{background:var(--ok)}.dot.error{background:var(--bad)}
-.dot.saving{background:var(--amber);animation:pulse 1s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
-.tl{background:none;border:none;color:var(--info);font-size:13px;font-family:inherit;cursor:pointer;padding:0}
-.tl.danger{color:var(--bad)}
-/* ── Tab bar ── */
-.tabbar{position:sticky;top:var(--th);z-index:190;background:var(--surf);
-  border-bottom:1px solid var(--brd);display:flex}
-.tbtn{flex:1;height:var(--tbh);background:none;border:none;font-size:13px;font-weight:600;
-  color:var(--tx3);font-family:inherit;cursor:pointer;position:relative;transition:color .15s;
-  display:flex;align-items:center;justify-content:center;gap:4px;-webkit-tap-highlight-color:transparent}
-.tbtn.active{color:var(--amber)}
-.tbtn.active::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:2.5px;
-  background:var(--amber);border-radius:2px 2px 0 0}
-.tbadge{background:var(--bad);color:#fff;font-size:10px;font-weight:700;
-  min-width:16px;height:16px;border-radius:99px;padding:0 4px;display:flex;align-items:center;justify-content:center}
-/* ── Count tab toolbar ── */
-#tab-count{display:block}#tab-queue,#tab-totals,#tab-guided{display:none}
-.toolbar{position:sticky;top:calc(var(--th) + var(--tbh));z-index:150;background:var(--bg);
-  padding:.65rem 1rem;display:flex;flex-direction:column;gap:.5rem;border-bottom:1px solid var(--brd)}
-.filter-row{display:flex;gap:5px;overflow-x:auto;align-items:center;padding-bottom:1px}
-.filter-row::-webkit-scrollbar{display:none}
-.fpill{flex-shrink:0;height:34px;padding:0 13px;background:var(--surf);border:1px solid var(--brdm);
-  border-radius:99px;font-size:13px;font-weight:500;color:var(--tx2);font-family:inherit;cursor:pointer;
-  white-space:nowrap;transition:background .12s,color .12s,border-color .12s;-webkit-tap-highlight-color:transparent}
-.fpill:hover{background:var(--surf2)}.fpill.on{background:var(--amber);border-color:var(--amber);color:#fff}
-.fpill.blind-on{background:var(--bad-bg);border-color:var(--bad);color:var(--bad);font-weight:700}
-.scan-pill{flex-shrink:0;height:34px;padding:0 14px;background:var(--amber);color:#fff;border:none;
-  border-radius:99px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent}
-.scan-pill:hover{background:var(--amber-dk)}
-.csv-pill{flex-shrink:0;height:34px;padding:0 13px;background:var(--surf);border:1px solid var(--brdm);
-  border-radius:99px;font-size:13px;color:var(--tx2);font-family:inherit;cursor:pointer;margin-left:auto}
-.csv-pill:hover{background:var(--surf2)}
-/* ── Groups & rows ── */
-.mat-list{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rlg);
-  margin:.75rem 1rem;overflow:hidden}
-.grp-sec{border-bottom:1px solid var(--brd)}.grp-sec:last-child{border-bottom:none}
-.grp-hdr{width:100%;display:flex;align-items:center;gap:10px;padding:.65rem 1rem;
-  background:var(--surf2);border:none;cursor:pointer;font-family:inherit;-webkit-tap-highlight-color:transparent}
-.grp-hdr:hover{filter:brightness(.97)}
-.grp-ico{width:28px;height:28px;border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:13px}
-.grp-body{flex:1;min-width:0}
-.grp-name{font-size:13px;font-weight:700;display:block}
-.grp-sub{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:6px;margin-top:1px}
-.grp-bar-wrap{flex:1;max-width:64px;height:3px;background:var(--brdm);border-radius:2px;overflow:hidden}
-.grp-bar-fill{height:100%;background:var(--amber);border-radius:2px;transition:width .4s}
-.grp-badge{font-size:11px;font-weight:700;background:var(--surf);border:1px solid var(--brdm);
-  border-radius:99px;padding:1px 8px;color:var(--tx2)}
-.grp-badge.done{background:var(--ok-bg);color:var(--ok);border-color:transparent}
-.grp-chev{font-size:16px;color:var(--tx3);flex-shrink:0;transition:transform .2s;width:20px;text-align:center}
-.grp-chev.closed{transform:rotate(-90deg)}
-.grp-items{background:var(--surf)}.grp-items.hidden{display:none}
-.mrow{display:flex;align-items:center;gap:10px;padding:9px 1rem;
-  border-bottom:1px solid var(--brd);min-height:58px}
-.mrow:last-child{border-bottom:none}
-.mrow.r-ok{background:color-mix(in srgb,var(--ok-bg) 35%,transparent)}
-.mrow.r-bad{background:color-mix(in srgb,var(--bad-bg) 35%,transparent)}
-.mrow.r-mm{background:color-mix(in srgb,var(--mm-bg) 55%,transparent)}
-.mrow.r-or{background:color-mix(in srgb,var(--or-bg) 55%,transparent)}
-.mrow.r-dm{background:color-mix(in srgb,var(--dm-bg) 55%,transparent)}
-.mrow.r-em{background:color-mix(in srgb,var(--em-bg) 55%,transparent)}
-.rdot{width:10px;height:10px;border-radius:50%;flex-shrink:0;background:var(--brdm);transition:background .2s}
-.rdot.ok{background:var(--ok)}.rdot.bad{background:var(--bad)}
-.rinfo{flex:1;min-width:0}
-.rdesc{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rmeta{font-size:11px;color:var(--tx3);margin-top:2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}
-.fchip{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px}
-.fchip.mismatch{background:var(--mm-bg);color:var(--mm)}
-.fchip.orphaned{background:var(--or-bg);color:var(--or)}
-.fchip.damaged{background:var(--dm-bg);color:var(--dm)}
-.fchip.empty{background:var(--em-bg);color:var(--em)}
-.rright{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0}
-.rqty{width:80px;height:36px;padding:0 8px;text-align:right;font-family:var(--mono);font-size:15px;
-  font-weight:700;background:var(--surf2);border:1.5px solid var(--brdm);border-radius:var(--rsm);
-  color:var(--tx);-webkit-appearance:none;appearance:none;outline:none;transition:border-color .15s,box-shadow .15s}
-.rqty:focus{border-color:var(--amber);box-shadow:0 0 0 3px rgba(184,124,32,.14);background:var(--surf)}
-.rvar{font-family:var(--mono);font-size:11px;font-weight:700;text-align:right;white-space:nowrap}
-.rvar.none{color:var(--tx3);font-weight:400}.rvar.ok{color:var(--ok)}.rvar.pos{color:var(--ok)}.rvar.neg{color:var(--bad)}
-.fbtn{background:none;border:none;cursor:pointer;padding:4px;color:var(--tx3);flex-shrink:0;
-  border-radius:var(--rsm);transition:color .15s,background .15s;
-  display:flex;align-items:center;justify-content:center;min-width:30px;min-height:30px;-webkit-tap-highlight-color:transparent}
-.fbtn:hover{color:var(--amber);background:var(--amber-lt)}
-.fbtn.fl-mm{color:var(--mm)}.fbtn.fl-or{color:var(--or)}.fbtn.fl-dm{color:var(--dm)}.fbtn.fl-em{color:var(--em)}
-.list-footer{padding:.6rem 1rem;font-size:12px;color:var(--tx3);
-  display:flex;justify-content:space-between;border-top:1px solid var(--brd);background:var(--surf)}
-/* ── Desktop table ── */
-.tbl-wrap{display:none}
-@media(min-width:768px){
-  .mat-list{display:none}
-  .tbl-wrap{display:block;margin:.75rem 1rem;background:var(--surf);
-    border:1px solid var(--brd);border-radius:var(--rlg);overflow:hidden}
-  .tbl-scroll{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:12px;min-width:700px}
-  thead tr{background:var(--surf2)}
-  th{padding:9px 10px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;
-    letter-spacing:.07em;color:var(--tx3);border-bottom:1px solid var(--brd);white-space:nowrap}
-  th.r,td.r{text-align:right}
-  td{padding:6px 10px;border-bottom:1px solid var(--brd);vertical-align:middle}
-  tr:last-child td{border-bottom:none}
-  tr.tr-ok td{background:color-mix(in srgb,var(--ok-bg) 40%,transparent)}
-  tr.tr-bad td{background:color-mix(in srgb,var(--bad-bg) 40%,transparent)}
-  tr.tr-flag td{background:color-mix(in srgb,var(--mm-bg) 40%,transparent)}
-  tr:hover td{filter:brightness(.97)}
-  .tm{font-family:var(--mono);font-size:11px;color:var(--tx2)}
-  .td{font-size:12px;max-width:200px;word-break:break-word}
-  .tsap{font-family:var(--mono);font-size:12px;color:var(--tx2)}
-  .tqin{width:80px;height:30px;padding:0 7px;font-family:var(--mono);font-size:12px;border-radius:var(--rsm)}
-  .tnotes{width:110px;height:30px;padding:0 7px;font-size:11px;border-radius:var(--rsm)}
-  .tvar{font-family:var(--mono);font-size:12px;font-weight:700;white-space:nowrap}
-  .tv-none{color:var(--tx3);font-weight:400}.tv-ok,.tv-pos{color:var(--ok)}.tv-neg{color:var(--bad)}
-  .tby{font-size:11px;color:var(--tx2)}.ttime{font-size:10px;color:var(--tx3)}
-  .tfooter{padding:8px 12px;font-size:11px;color:var(--tx3);border-top:1px solid var(--brd);
-    background:var(--surf2);display:flex;justify-content:space-between}
-}
-.norows{text-align:center;padding:3rem 1rem;color:var(--tx2);font-size:14px}
-.listfoot{padding:.6rem 1rem;font-size:12px;color:var(--tx3);display:flex;justify-content:space-between;
-  border-top:1px solid var(--brd);background:var(--surf)}
-/* ── Totals tab ── */
-.tot-content{padding:1rem;display:flex;flex-direction:column;gap:1rem}
-.prog-card{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rlg);padding:1.25rem}
-.prog-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--tx3);margin-bottom:.85rem}
-.prog-bar{height:10px;background:var(--surf2);border-radius:5px;overflow:hidden;margin-bottom:.85rem}
-.prog-fill{height:100%;background:var(--amber);border-radius:5px;transition:width .5s}
-.prog-nums{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem}
-.pn{text-align:center}.pn-val{font-size:24px;font-weight:700;display:block}
-.pn-val.amber{color:var(--amber)}.pn-val.ok{color:var(--ok)}.pn-val.muted{color:var(--tx2)}
-.pn-lbl{font-size:11px;color:var(--tx3)}
-.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:.6rem}
-@media(min-width:480px){.sgrid{grid-template-columns:repeat(4,1fr)}}
-.scard{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rmd);padding:.85rem 1rem}
-.slbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);margin-bottom:4px}
-.sval{font-size:18px;font-weight:700;font-family:var(--mono)}
-.sval.ok{color:var(--ok)}.sval.bad{color:var(--bad)}
-.sechead{font-size:13px;font-weight:700;color:var(--tx2);padding:.5rem 0 .4rem;display:flex;align-items:center;gap:6px}
-.seccnt{background:var(--surf2);border:1px solid var(--brd);border-radius:99px;font-size:11px;font-weight:700;padding:1px 8px;color:var(--tx3)}
-.seccnt.bad{background:var(--bad-bg);color:var(--bad);border-color:transparent}
-.rlist{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rmd);overflow:hidden}
-.ri{display:grid;grid-template-columns:1fr auto;gap:.2rem .75rem;padding:.7rem .9rem;border-bottom:1px solid var(--brd);align-items:center}
-.ri:last-child{border-bottom:none}
-.ri-desc{font-size:13px;font-weight:500;line-height:1.3}
-.ri-id{font-family:var(--mono);font-size:11px;color:var(--tx3)}
-.ri-qtys{font-size:12px;color:var(--tx2);grid-column:1}
-.ri-var{font-family:var(--mono);font-size:14px;font-weight:700;text-align:right}
-.ri-var.pos{color:var(--ok)}.ri-var.neg{color:var(--bad)}
-.ri-sap{font-family:var(--mono);font-size:13px;color:var(--tx2);text-align:right;grid-row:1/span 2;align-self:center}
-.emptysec{text-align:center;padding:1.5rem;color:var(--tx3);font-size:13px}
-/* ── Queue tab ── */
-.q-content{padding:1rem;display:flex;flex-direction:column;gap:.75rem}
-.q-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.25rem}
-.q-title{font-size:16px;font-weight:700}
-.qitem{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rmd);overflow:hidden;margin-bottom:.5rem}
-.qitem-head{padding:.65rem .85rem;border-bottom:1px solid var(--brd);display:flex;align-items:flex-start;gap:8px}
-.qflag{flex-shrink:0;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;margin-top:2px}
-.qflag.mismatch{background:var(--mm-bg);color:var(--mm)}
-.qflag.orphaned{background:var(--or-bg);color:var(--or)}
-.qflag.damaged{background:var(--dm-bg);color:var(--dm)}
-.qflag.empty{background:var(--em-bg);color:var(--em)}
-.qflag.quarantine{background:var(--warn-bg);color:var(--warn)}
-.qflag.resolved{background:var(--ok-bg);color:var(--ok)}
-.qinfo{flex:1;min-width:0}.qi-desc{font-size:14px;font-weight:600;line-height:1.3}
-.qi-meta{font-size:11px;color:var(--tx3);margin-top:2px}
-.qbody{padding:.6rem .85rem;display:grid;grid-template-columns:1fr 1fr;gap:.35rem;font-size:12px}
-.ql{color:var(--tx3);font-size:11px}.qv{font-family:var(--mono);text-align:right;font-size:12px;font-weight:600}
-.qacts{padding:.6rem .85rem;border-top:1px solid var(--brd);display:flex;gap:.5rem}
-.qbtn{flex:1;height:36px;border:1px solid var(--brdm);border-radius:var(--rsm);
-  font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;background:var(--surf2);color:var(--tx2)}
-.qbtn:hover{background:var(--surf)}
-.qbtn-ok{background:var(--ok);color:#fff;border-color:transparent}.qbtn-ok:hover{background:#226B32}
-.qbtn-link{color:var(--info);border-color:var(--info-bg);background:var(--info-bg)}
-/* ── Guided count tab ── */
-.guide-content{padding:1rem;display:flex;flex-direction:column;gap:1rem;min-height:60vh}
-.guide-header{display:flex;align-items:center;gap:.75rem}
-.guide-title{font-size:16px;font-weight:700;flex:1}
-.guide-prog-text{font-size:13px;color:var(--tx2)}
-.guide-card{background:var(--surf);border:2px solid var(--brd);border-radius:var(--rlg);
-  padding:1.5rem;display:flex;flex-direction:column;gap:1rem}
-.guide-card.priority-high{border-color:var(--bad)}
-.guide-card.priority-med{border-color:var(--amber)}
-.guide-matid{font-family:var(--mono);font-size:12px;color:var(--tx3)}
-.guide-desc{font-size:20px;font-weight:700;line-height:1.3}
-.guide-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;background:var(--surf2);
-  border-radius:var(--rmd);padding:.85rem 1rem}
-.gs-lbl{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.05em}
-.gs-val{font-family:var(--mono);font-size:17px;font-weight:700;text-align:right}
-.gs-val.ok{color:var(--ok)}.gs-val.bad{color:var(--bad)}.gs-val.muted{color:var(--tx2)}
-.guide-qty-row{display:flex;flex-direction:column;gap:.5rem}
-.guide-qty-lbl{font-size:12px;font-weight:700;color:var(--tx2);text-transform:uppercase;letter-spacing:.05em}
-.guide-qty-in{height:56px;font-family:var(--mono);font-size:24px;font-weight:700;text-align:center;
-  background:var(--surf2);border:2px solid var(--brdm);border-radius:var(--rmd);color:var(--tx)}
-.guide-qty-in:focus{border-color:var(--amber);background:var(--surf)}
-.guide-actions{display:grid;grid-template-columns:1fr 1fr;gap:.65rem}
-.gbtn{height:52px;border:none;border-radius:var(--rmd);font-size:14px;font-weight:700;
-  cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;
-  transition:opacity .15s;-webkit-tap-highlight-color:transparent}
-.gbtn:hover{opacity:.88}.gbtn:disabled{opacity:.35;cursor:not-allowed}
-.gbtn-confirm{background:var(--amber);color:#fff;grid-column:1/-1}
-.gbtn-flag{background:var(--mm-bg);color:var(--mm)}
-.gbtn-skip{background:var(--surf2);color:var(--tx2)}
-.guide-done{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;padding:3rem 1rem;gap:1rem}
-.guide-done-icon{font-size:48px}
-.guide-done-title{font-size:22px;font-weight:700}
-.guide-done-sub{font-size:14px;color:var(--tx2)}
-/* ── Scanner ── */
-#scanner{position:fixed;inset:0;z-index:5000;background:#0E0E0C;display:none;flex-direction:column}
-#scanner.open{display:flex}
-.sc-top{display:flex;align-items:center;gap:.75rem;padding:1rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.1)}
-.sc-title{font-size:15px;font-weight:700;color:#fff;flex:1}
-.sc-mpill{font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;flex-shrink:0}
-.sc-mpill.inc{background:rgba(184,124,32,.2);color:#E8A832}
-.sc-mpill.blind{background:rgba(163,45,45,.25);color:#E06060}
-.sc-close{background:none;border:none;color:rgba(255,255,255,.6);font-size:22px;cursor:pointer;line-height:1;padding:4px}
-.sc-search-area{padding:1.25rem;border-bottom:1px solid rgba(255,255,255,.08)}
-.sc-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-bottom:8px}
-#sc-input{width:100%;height:58px;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.15);
-  border-radius:var(--rmd);color:#fff;font-size:22px;font-family:var(--mono);font-weight:700;text-align:center;
-  outline:none;-webkit-appearance:none;appearance:none;padding:0 16px;transition:border-color .15s}
-#sc-input:focus{border-color:var(--amber)}#sc-input::placeholder{color:rgba(255,255,255,.22);font-family:inherit}
-.sc-result{flex:1;overflow-y:auto;padding:1.25rem;display:flex;flex-direction:column;gap:1rem}
-.sc-idle{display:flex;flex-direction:column;align-items:center;justify-content:center;
-  height:100%;color:rgba(255,255,255,.22);text-align:center;gap:.75rem;padding:2rem}
-.sc-idle svg{opacity:.25}.sc-idle-t{font-size:16px}.sc-idle-s{font-size:13px}
-.sc-card{background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.12);border-radius:var(--rlg);padding:1.25rem;transition:border-color .3s}
-.sc-card.found{border-color:rgba(42,122,59,.7);background:rgba(42,122,59,.1)}
-.sc-card.notfound{border-color:rgba(163,45,45,.7);background:rgba(163,45,45,.1)}
-.sc-mid{font-family:var(--mono);font-size:12px;color:rgba(255,255,255,.5);margin-bottom:4px}
-.sc-mdesc{font-size:19px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:.85rem}
-.sc-mgrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-.sc-glbl{font-size:11px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.05em}
-.sc-gval{font-family:var(--mono);font-size:16px;font-weight:700;color:#fff;text-align:right}
-.sc-gval.ok{color:#5CB87A}.sc-gval.bad{color:#E06060}
-.sc-qty-area{display:flex;flex-direction:column;gap:.6rem}
-#sc-qty{width:100%;height:64px;background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.15);
-  border-radius:var(--rmd);color:#fff;font-size:28px;font-family:var(--mono);font-weight:700;
-  text-align:center;outline:none;-webkit-appearance:none;appearance:none;padding:0 16px;transition:border-color .15s}
-#sc-qty:focus{border-color:var(--amber)}#sc-qty::placeholder{color:rgba(255,255,255,.2)}
-.sc-btns{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
-.scbtn{height:52px;border:none;border-radius:var(--rmd);font-size:13px;font-weight:700;cursor:pointer;
-  font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s;-webkit-tap-highlight-color:transparent}
-.scbtn:hover{opacity:.88}.scbtn:disabled{opacity:.35;cursor:not-allowed}
-.scbtn-ok{background:var(--amber);color:#fff;grid-column:1/-1}
-.scbtn-mm{background:var(--mm-bg);color:var(--mm)}.scbtn-or{background:var(--or-bg);color:var(--or)}
-.scbtn-q{background:var(--info-bg);color:var(--info)}.scbtn-quar{background:var(--warn-bg);color:var(--warn)}
-.scbtn-clr{background:rgba(255,255,255,.08);color:rgba(255,255,255,.55)}
-@keyframes flashOk{0%,100%{background:rgba(42,122,59,.1)}50%{background:rgba(42,122,59,.35)}}
-@keyframes flashBad{0%,100%{background:rgba(163,45,45,.1)}50%{background:rgba(163,45,45,.35)}}
-.sc-card.fok{animation:flashOk .4s ease}.sc-card.fbad{animation:flashBad .4s ease}
-/* ── Quarantine dialog ── */
-#quar-dlg{position:fixed;inset:0;z-index:6000;background:rgba(0,0,0,.55);
-  display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
-#quar-dlg.open{display:flex}
-.quar-card{background:var(--surf);border-radius:var(--rlg) var(--rlg) 0 0;width:100%;max-width:480px;
-  padding:1.25rem 1.25rem calc(1.25rem + env(safe-area-inset-bottom,0))}
-.quar-title{font-size:15px;font-weight:700;margin-bottom:1rem}
-.quar-row{margin-bottom:.75rem}
-.quar-lbl{font-size:12px;font-weight:600;color:var(--tx2);margin-bottom:5px}
-.quar-acts{display:flex;gap:.6rem;margin-top:1rem}
-/* ── Modals ── */
-.modal{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);
-  display:flex;align-items:center;justify-content:center;padding:1.5rem;backdrop-filter:blur(2px)}
-.mcard{background:var(--surf);border:1px solid var(--brd);border-radius:var(--rlg);
-  padding:1.75rem;width:100%;max-width:360px;box-shadow:0 16px 48px rgba(0,0,0,.2)}
-.m-ico{width:44px;height:44px;border-radius:var(--rmd);display:flex;align-items:center;justify-content:center;margin-bottom:1rem}
-.m-ico.red{background:var(--bad-bg)}.m-ico.amber{background:var(--amber-lt)}
-.m-title{font-size:17px;font-weight:700;margin-bottom:.5rem}
-.m-body{font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:1.5rem}
-.m-warn{background:var(--bad-bg);border:1px solid rgba(163,45,45,.2);border-radius:var(--rsm);
-  padding:.6rem .85rem;font-size:12px;font-weight:600;color:var(--bad);margin-bottom:1.25rem;line-height:1.5}
-.m-warn.amber-w{background:var(--warn-bg);border-color:rgba(122,82,0,.2);color:var(--warn)}
-.m-acts{display:flex;gap:.65rem}
-.mbtn-c{flex:1;height:44px;background:var(--surf2);border:1px solid var(--brdm);border-radius:var(--rsm);
-  font-size:14px;font-weight:600;color:var(--tx2);font-family:inherit;cursor:pointer}
-.mbtn-c:hover{background:var(--brd)}
-.mbtn-ok{flex:1;height:44px;border:none;border-radius:var(--rsm);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer}
-.mbtn-ok.red{background:var(--bad);color:#fff}.mbtn-ok.red:hover{background:#8a2525}
-.mbtn-ok.amber{background:var(--amber);color:#fff}.mbtn-ok.amber:hover{background:var(--amber-dk)}
-.mbtn-ok:disabled{background:var(--tx3);cursor:not-allowed}
-/* Confirm entry */
-.cm-top{display:flex;align-items:baseline;gap:8px;margin-bottom:.35rem}
-.cm-id{font-family:var(--mono);font-size:12px;color:var(--tx3)}
-.cm-desc{font-size:15px;font-weight:700;flex:1;line-height:1.3}
-.cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem .75rem;
-  background:var(--surf2);border:1px solid var(--brd);border-radius:var(--rmd);padding:.85rem 1rem;margin:1rem 0}
-.cml{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--tx3);align-self:center}
-.cmv{font-family:var(--mono);font-size:16px;font-weight:700;text-align:right}
-.cmv.hi{color:var(--amber);font-size:20px}.cmv.ok{color:var(--ok)}.cmv.bad{color:var(--bad)}
-.cmv.muted{color:var(--tx2);font-weight:400;font-style:italic}
-.cm-div{grid-column:1/-1;height:1px;background:var(--brdm);margin:.1rem 0}
-.blind-warn{background:var(--bad-bg);border:1px solid rgba(163,45,45,.25);border-radius:var(--rsm);
-  padding:.55rem .8rem;font-size:12px;font-weight:600;color:var(--bad);margin-bottom:.75rem}
-/* Flag sheet */
-#flagsheet{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.5);
-  display:none;align-items:flex-end;justify-content:center;backdrop-filter:blur(2px)}
-#flagsheet.open{display:flex}
-.fscard{background:var(--surf);border-radius:var(--rlg) var(--rlg) 0 0;width:100%;max-width:480px;
-  padding:1rem 1rem calc(1rem + env(safe-area-inset-bottom,0))}
-.fs-title{font-size:12px;font-weight:700;color:var(--tx3);text-align:center;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.85rem}
-.fopt{width:100%;height:52px;background:none;border:1px solid var(--brd);border-radius:var(--rmd);
-  font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;
-  display:flex;align-items:center;gap:10px;padding:0 1rem;margin-bottom:.5rem;transition:background .12s;-webkit-tap-highlight-color:transparent}
-.fopt:hover{background:var(--surf2)}.fopt:last-child{margin-bottom:0}
-.fopt.mm{color:var(--mm)}.fopt.or{color:var(--or)}.fopt.dm{color:var(--dm)}.fopt.em{color:var(--em)}
-.fopt.cl{color:var(--tx2)}.fopt.cn{color:var(--tx3);border-color:transparent;margin-top:.25rem}
-/* Toast */
-#toast{position:fixed;bottom:1.25rem;left:50%;transform:translateX(-50%);
-  background:var(--tx);color:var(--bg);padding:10px 18px;border-radius:99px;
-  font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s;z-index:9999;
-  white-space:nowrap;max-width:calc(100vw - 2rem)}
-#toast.show{opacity:1}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meridian — Receiving Calendar</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Noto+Serif+JP:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Supabase JS client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<!-- SETUP -->
-<div id="setup">
-<div class="scard">
-<div class="sicon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#B87C20" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>
-<div class="stitle">Cerritos Physical Count</div>
-<div class="ssub">17AG · Cerritos Warehouse, CA<br>Entries sync live across your team.</div>
-<label class="flbl" for="setup-name">Your name or initials</label>
-<input id="setup-name" type="text" placeholder="e.g. Albert G." autocomplete="off" autocorrect="off" autocapitalize="words"/>
-<div class="hr"></div>
-<label class="flbl">Inventory file</label>
-<div id="dropzone" class="dropzone" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-<input type="file" id="file-input" accept=".xlsx,.xls" onchange="onFileInput(event)"/>
-<div class="drop-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
-<div class="drop-p">Drop SAP export here</div>
-<div class="drop-s">or tap to browse — .xlsx or .xls</div>
-</div>
-<div id="mstatus" class="mstatus loading" style="display:none">
-<span class="spinner ms-ico"></span>
-<div><div class="ms-title" id="ms-title">Checking…</div><div class="ms-sub" id="ms-sub"></div></div>
-</div>
-<button class="btn-p" id="start-btn" disabled onclick="startCounting()">Start Counting</button>
-</div>
-</div>
-<!-- APP -->
-<div id="app">
-<div class="topbar">
-<div class="topbar-title">17AG Cerritos Count</div>
-<div class="topbar-meta">
-<span class="dot" id="cdot"></span><span id="clbl" style="font-size:12px;color:var(--tx2)">…</span>
-<button class="tl" onclick="goBack()">← Exit</button>
-<button class="tl danger" onclick="showClearModal()">Clear Day</button>
-</div>
-</div>
-<div class="tabbar">
-<button class="tbtn active" id="tb-count"  onclick="switchTab('count')">Count</button>
-<button class="tbtn"        id="tb-queue"  onclick="switchTab('queue')">Queue <span class="tbadge" id="q-badge" style="display:none">0</span></button>
-<button class="tbtn"        id="tb-guided" onclick="switchTab('guided')">Guided</button>
-<button class="tbtn"        id="tb-totals" onclick="switchTab('totals')">Totals</button>
-</div>
-<!-- COUNT TAB -->
-<div id="tab-count">
-<div class="toolbar">
-<input id="search" type="text" placeholder="Search — fuzzy match by #, description, or partial…" oninput="applyFilters()" autocorrect="off" autocomplete="off"/>
-<div class="filter-row">
-<button class="fpill on" data-f="all" onclick="setFilter(this)">All</button>
-<button class="fpill" data-f="uncounted" onclick="setFilter(this)">Uncounted</button>
-<button class="fpill" data-f="counted" onclick="setFilter(this)">Counted</button>
-<button class="fpill" data-f="variance" onclick="setFilter(this)">Variance</button>
-<button class="fpill" data-f="flagged" onclick="setFilter(this)">⚑ Flagged</button>
-<button class="fpill" id="blind-btn" onclick="toggleBlind()">Blind Count</button>
-<button class="scan-pill" onclick="openScanner()">&#9641; Scanner</button>
-<button class="csv-pill" onclick="exportCSV()">⬇ CSV</button>
-</div>
-</div>
-<div class="mat-list" id="card-list"></div>
-<div class="tbl-wrap"><div class="tbl-scroll"><table>
-<thead><tr>
-<th style="width:88px">Material</th><th>Description</th>
-<th class="r" style="width:76px">SAP</th>
-<th class="r" style="width:88px">Add Count</th>
-<th class="r" style="width:76px">Total</th>
-<th class="r" style="width:76px">Variance</th>
-<th style="width:88px">By</th>
-<th style="width:110px">Notes</th>
-<th style="width:52px">Time</th>
-<th style="width:30px"></th>
-</tr></thead>
-<tbody id="tbl-body"></tbody>
-</table></div>
-<div class="tfooter"><span id="rc-desktop">—</span><span id="ls-desktop"></span></div>
-</div>
-<div class="listfoot"><span id="rc-mobile">—</span><span id="ls-mobile"></span></div>
-</div>
-<!-- QUEUE TAB -->
-<div id="tab-queue"><div class="q-content" id="q-content"><div class="norows">Loading…</div></div></div>
-<!-- GUIDED TAB -->
-<div id="tab-guided"><div class="guide-content" id="guide-content"><div class="norows">Loading guided count…</div></div></div>
-<!-- TOTALS TAB -->
-<div id="tab-totals"><div class="tot-content" id="tot-content"></div></div>
-</div>
-<!-- SCANNER -->
-<div id="scanner">
-<div class="sc-top">
-<div class="sc-title">Scanner</div>
-<span class="sc-mpill inc" id="sc-mpill">INCREMENTAL</span>
-<button class="sc-close" onclick="closeScanner()">✕</button>
-</div>
-<div class="sc-search-area">
-<div class="sc-lbl">Scan or type product number</div>
-<input id="sc-input" type="number" inputmode="numeric" placeholder="- - - - - - -"
-       onkeydown="onScKd(event)" oninput="onScTyped()"/>
-</div>
-<div class="sc-result" id="sc-result">
-<div class="sc-idle">
-<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><path d="M21 16h-3v3"/></svg>
-<div class="sc-idle-t">Ready to scan</div>
-<div class="sc-idle-s">Point scanner or type a product number</div>
-</div>
-</div>
-</div>
-<!-- QUARANTINE DIALOG -->
-<div id="quar-dlg" onclick="onQuarOverlay(event)">
-<div class="quar-card" id="quar-card">
-<div class="quar-title">📦 Log to Quarantine</div>
-<div class="quar-row">
-<div class="quar-lbl">Scanned / Product # (if known)</div>
-<input id="quar-value" type="text" placeholder="Barcode or description"/>
-</div>
-<div class="quar-row">
-<div class="quar-lbl">Description / what you see</div>
-<input id="quar-desc" type="text" placeholder="e.g. 4 cases, unlabeled, near dock 2"/>
-</div>
-<div class="quar-row">
-<div class="quar-lbl">Physical location</div>
-<input id="quar-loc" type="text" placeholder="e.g. Aisle B, pallet 3"/>
-</div>
-<div class="quar-acts">
-<button class="mbtn-c" onclick="closeQuarantine()">Cancel</button>
-<button class="mbtn-ok amber" onclick="submitQuarantine()">Log Item</button>
-</div>
-</div>
-</div>
-<!-- FLAG SHEET -->
-<div id="flagsheet" onclick="onFsOverlay(event)">
-<div class="fscard">
-<div class="fs-title" id="fs-title">Flag material</div>
-<button class="fopt mm" onclick="doFlag('mismatch')">⚠ Count Mismatch — qty doesn't match system</button>
-<button class="fopt em" onclick="doFlag('empty')">◎ Empty — location empty but system shows stock</button>
-<button class="fopt or" onclick="doFlag('orphaned')">🔍 Orphaned — found product with no system record</button>
-<button class="fopt dm" onclick="doFlag('damaged')">⛔ Damaged / Partial — product compromised</button>
-<button class="fopt cl" id="fs-clear" onclick="doFlag(null)">✕ Clear current flag</button>
-<button class="fopt cn" onclick="closeFlagSheet()">Cancel</button>
-</div>
-</div>
-<!-- CONFIRM MODAL -->
-<div id="confirm-modal" class="modal" style="display:none" onclick="onCmOverlay(event)">
-<div class="mcard">
-<div class="cm-top"><span class="cm-id" id="cm-id"></span><span class="cm-desc" id="cm-desc"></span></div>
-<div class="blind-warn" id="cm-blind" style="display:none">⛔ BLIND COUNT — this will overwrite the current total.</div>
-<div class="cm-grid">
-<span class="cml">SAP Qty</span><span class="cmv muted" id="cm-sap"></span>
-<div class="cm-div"></div>
-<span class="cml">Current total</span><span class="cmv muted" id="cm-prev"></span>
-<span class="cml">This entry</span><span class="cmv hi" id="cm-entry"></span>
-<div class="cm-div"></div>
-<span class="cml">New total</span><span class="cmv" id="cm-total"></span>
-<span class="cml">Variance</span><span class="cmv" id="cm-var"></span>
-</div>
-<div class="m-acts">
-<button class="mbtn-c" onclick="cancelEntry()">Cancel</button>
-<button class="mbtn-ok amber" id="confirm-btn" onclick="confirmEntry()">Confirm</button>
-</div>
-</div>
-</div>
-<!-- CLEAR MODAL -->
-<div id="clear-modal" class="modal" style="display:none" onclick="onClrOverlay(event)">
-<div class="mcard">
-<div class="m-ico red"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#A32D2D" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></div>
-<div class="m-title">Clear all data?</div>
-<div class="m-body">Removes all materials, counts, flags, and quarantine items for every user. Use at end of day.</div>
-<div class="m-warn">⚠ Cannot be undone. Export CSV first if needed.</div>
-<div class="m-acts">
-<button class="mbtn-c" onclick="hideClear()">Cancel</button>
-<button class="mbtn-ok red" id="clr-btn" onclick="clearAll()">Clear everything</button>
-</div>
-</div>
-</div>
-<div id="toast"></div>
-<script>
-const SB_URL='https://iyqeihxcuenaooqdgluf.supabase.co';
-const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml5cWVpaHhjdWVuYW9vcWRnbHVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgwMTY1MTcsImV4cCI6MjA5MzU5MjUxN30.dc3-3ONuuWMp8ZjsByc_Tcb5Vg2xk5abHK9yw-l8mxw';
-const MT='cerritos_materials',CT='cerritos_counts',QT='cerritos_quarantine';
-let db,MATS=[],counts={},parsedRows=null,currentUser='';
-let activeFilter='all',saveTimers={},dirty=new Set(),activeTab='count';
-let blindMode=false,pending=null,flagId=null,scId=null;
-let quaranItems=[];
-const GORD=['Cups','Lids','Labels','Cases','Seals','Sleeves','Tubs','Oils','Other'];
-const GICO={Cups:'🥤',Lids:'🔵',Labels:'🏷️',Cases:'📦',Seals:'🔒',Sleeves:'🫧',Tubs:'🪣',Oils:'🫗',Other:'📋'};
-let gex={};
 
-function grp(d){
-  const s=d.toLowerCase();
-  if(s.startsWith('cup'))return'Cups';if(s.startsWith('lid'))return'Lids';
-  if(s.startsWith('lbl'))return'Labels';if(s.startsWith('case'))return'Cases';
-  if(s.startsWith('seal'))return'Seals';if(s.startsWith('slv'))return'Sleeves';
-  if(s.startsWith('tub'))return'Tubs';if(s.startsWith('oil'))return'Oils';return'Other';
-}
+  <!-- ── Modal Overlay ─────────────────────────────── -->
+  <div id="modal-overlay" class="modal-overlay" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title" class="modal-heading">New Delivery</h2>
+        <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+      </div>
 
-function beep(t){
-  try{const ctx=new(window.AudioContext||window.webkitAudioContext)(),o=ctx.createOscillator(),g=ctx.createGain();
-    o.connect(g);g.connect(ctx.destination);
-    if(t==='ok'){o.frequency.value=880;g.gain.setValueAtTime(.25,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.15);o.start();o.stop(ctx.currentTime+.15)}
-    else if(t==='flag'){o.type='square';o.frequency.value=660;g.gain.setValueAtTime(.15,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.25);o.start();o.stop(ctx.currentTime+.25)}
-    else{o.frequency.value=200;g.gain.setValueAtTime(.2,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.3);o.start();o.stop(ctx.currentTime+.3)}
-  }catch(e){}
-}
+      <form class="modal-form" id="event-form" novalidate>
+        <input type="hidden" id="event-id" />
 
-function fuzzyScore(q,t){
-  const ql=q.toLowerCase().trim(),tl=t.toLowerCase();
-  if(!ql)return 100;if(tl===ql)return 100;if(tl.startsWith(ql))return 80;
-  if(tl.includes(ql))return 60;
-  let ws=0;ql.split(/\s+/).forEach(w=>{if(tl.includes(w))ws+=20});if(ws)return ws;
-  let ov=0;for(const c of ql)if(tl.includes(c))ov++;return(ov/ql.length)*15;
-}
-function fuzzyFilter(q,mats){
-  if(!q.trim())return mats;
-  return mats.map(m=>({...m,_s:Math.max(fuzzyScore(q,String(m.material_id)),fuzzyScore(q,m.description))}))
-    .filter(m=>m._s>5).sort((a,b)=>b._s-a._s);
-}
+        <!-- Vendor Name -->
+        <div class="form-group">
+          <label for="event-vendor">Vendor Name</label>
+          <input type="text" id="event-vendor" placeholder="e.g. Sysco Foods" autocomplete="off" required />
+        </div>
 
-function initSB(){db=supabase.createClient(SB_URL,SB_KEY)}
-const ni=document.getElementById('setup-name'),sb=document.getElementById('start-btn');
-ni.addEventListener('input',chkStart);
-ni.addEventListener('keydown',e=>{if(e.key==='Enter'&&!sb.disabled)startCounting()});
-function onDragOver(e){e.preventDefault();document.getElementById('dropzone').classList.add('over')}
-function onDragLeave(){document.getElementById('dropzone').classList.remove('over')}
-function onDrop(e){e.preventDefault();document.getElementById('dropzone').classList.remove('over');const f=e.dataTransfer.files[0];if(f)handleFile(f)}
-function onFileInput(e){const f=e.target.files[0];if(f)handleFile(f)}
+        <!-- PO# + Location side by side -->
+        <div class="form-row">
+          <div class="form-group">
+            <label for="event-po">PO #</label>
+            <input type="text" id="event-po" placeholder="e.g. 45231" autocomplete="off" required />
+          </div>
+          <div class="form-group">
+            <label for="event-location">Location</label>
+            <select id="event-location" required>
+              <option value="Buena Park">Buena Park</option>
+              <option value="Cerritos">Cerritos</option>
+            </select>
+          </div>
+        </div>
 
-function handleFile(f){
-  if(!f.name.match(/\.(xlsx|xls)$/i)){showMS('error','Unsupported','Upload .xlsx or .xls');return}
-  showMS('loading','Reading…',f.name);
-  const r=new FileReader();r.onload=e=>{
-    try{
-      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'});
-      const ws=wb.Sheets[wb.SheetNames[0]];const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-      let hi=-1;for(let i=0;i<Math.min(10,rows.length);i++){if(rows[i].some(c=>String(c).trim()==='Material')){hi=i;break}}
-      if(hi<0){showMS('error','Bad format','No "Material" header found');return}
-      const h=rows[hi].map(c=>String(c).trim());
-      const mi=h.findIndex(x=>x==='Material'),di=h.findIndex(x=>x==='Material Description'),qi=h.findIndex(x=>x==='Unrestricted Stock');
-      if(mi<0||di<0||qi<0){showMS('error','Missing cols','Need Material, Material Description, Unrestricted Stock');return}
-      const p=[];for(let i=hi+1;i<rows.length;i++){const r=rows[i];const id=parseInt(r[mi],10);const desc=String(r[di]||'').trim();const qty=parseFloat(r[qi])||0;if(!id||!desc)continue;p.push({material_id:id,description:desc,sap_qty:qty})}
-      if(!p.length){showMS('error','No rows','No valid rows found');return}
-      parsedRows=p;showMS('parsed',`${p.length} materials ready`,f.name);chkStart();
-    }catch(err){showMS('error','Parse error',err.message||'Could not read file')}
-  };r.readAsArrayBuffer(f);
-}
+        <!-- Return toggle -->
+        <div class="return-toggle-row">
+          <label class="return-toggle-label" for="event-is-return">
+            <input type="checkbox" id="event-is-return" class="return-checkbox" />
+            <span class="return-toggle-track">
+              <span class="return-toggle-thumb"></span>
+            </span>
+            <span class="return-toggle-text">This is a <strong>return</strong></span>
+          </label>
+        </div>
 
-function showMS(type,title,sub){
-  const el=document.getElementById('mstatus');el.style.display='flex';el.className=`mstatus ${type}`;
-  document.getElementById('ms-title').className=`ms-title ${type}`;
-  document.getElementById('ms-title').textContent=title;document.getElementById('ms-sub').textContent=sub||'';
-  const ic=el.querySelector('.ms-ico');
-  if(type==='loading'){ic.outerHTML='<span class="spinner ms-ico"></span>'}
-  else{const f={ready:'#2A7A3B',parsed:'#185FA5',error:'#A32D2D'}[type]||'#A32D2D';
-    const p={ready:'M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z',parsed:'M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v4a1 1 0 102 0V7zm-1 8a1 1 0 100-2 1 1 0 000 2z',error:'M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z'};
-    const c=el.querySelector('.ms-ico');if(c)c.outerHTML=`<svg class="ms-ico" viewBox="0 0 20 20" fill="${f}"><path fill-rule="evenodd" d="${p[type]||p.error}" clip-rule="evenodd"/></svg>`}
-}
-function chkStart(){sb.disabled=!(ni.value.trim()&&(MATS.length||parsedRows))}
+        <!-- Arrival time -->
+        <div class="form-group">
+          <label for="event-start">Expected Arrival</label>
+          <input type="datetime-local" id="event-start" required />
+        </div>
 
-async function checkExisting(){
-  showMS('loading','Checking…','');
-  try{const{data,error}=await db.from(MT).select('material_id,description,sap_qty,uploaded_by,uploaded_at').order('material_id');
-    if(error)throw error;
-    if(data&&data.length){MATS=data;const f=data[0];const d=f.uploaded_at?new Date(f.uploaded_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):'';
-      showMS('ready',`${data.length} materials loaded`,`${f.uploaded_by?'By '+f.uploaded_by+' · ':''}${d}`)}
-    else showMS('error','No materials','Upload SAP export to start');
-  }catch(e){showMS('error','Supabase error','Check key & network')}
-  chkStart();
-}
+        <!-- Legend rendered by script.js from the same color constants as events -->
+        <div class="location-legend" id="modal-legend"></div>
 
-async function startCounting(){
-  const name=ni.value.trim();if(!name||(!MATS.length&&!parsedRows))return;
-  currentUser=name;try{localStorage.setItem('cu',name)}catch(e){}
-  document.getElementById('setup').style.display='none';document.getElementById('app').style.display='block';
-  setConn('connecting');
-  if(parsedRows){await uploadMats(parsedRows);MATS=parsedRows;parsedRows=null}
-  await loadCounts();await loadQuarantine();renderAll();subscribeRT();
-}
+        <div class="modal-actions">
+          <button type="button" class="btn-danger" id="delete-event" style="display:none">Delete</button>
+          <div class="modal-actions-right">
+            <button type="button" class="btn-ghost" id="cancel-event">Cancel</button>
+            <button type="submit" class="btn-primary">Save Delivery</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
 
-async function uploadMats(rows){
-  showToast(`Uploading ${rows.length} materials…`);
-  try{await db.from(MT).delete().gt('material_id',0);
-    const s=rows.map(r=>({...r,uploaded_by:currentUser,uploaded_at:new Date().toISOString()}));
-    for(let i=0;i<s.length;i+=500){const{e}=await db.from(MT).insert(s.slice(i,i+500));if(e)throw e}
-    showToast(`${rows.length} materials uploaded`);
-  }catch(e){showToast('Upload failed');console.error(e)}
-}
+  <!-- ── App Shell ──────────────────────────────────── -->
+  <div class="app">
 
-function goBack(){document.getElementById('setup').style.display='flex';document.getElementById('app').style.display='none';ni.value='';sb.disabled=true}
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-brand">
+        <span class="brand-mark" aria-hidden="true">◈</span>
+        <span class="brand-name">Meridian</span>
+        <span class="brand-sub">Receiving</span>
+      </div>
 
-function switchTab(t){
-  activeTab=t;['count','queue','guided','totals'].forEach(x=>{
-    document.getElementById('tab-'+x).style.display=x===t?'block':'none';
-    document.getElementById('tb-'+x).classList.toggle('active',x===t);
-  });
-  if(t==='totals')renderTotals();if(t==='queue')renderQueue();if(t==='guided')renderGuided();
-}
+      <div class="header-nav">
+        <div class="nav-controls">
+          <button class="nav-btn" id="prev-btn" aria-label="Previous period">‹</button>
+          <button class="nav-today" id="today-btn">Today</button>
+          <button class="nav-btn" id="next-btn" aria-label="Next period">›</button>
+        </div>
+        <h1 class="current-period" id="current-period" aria-live="polite"></h1>
+      </div>
 
-function toggleBlind(){
-  blindMode=!blindMode;const btn=document.getElementById('blind-btn');
-  if(blindMode){btn.textContent='⛔ Blind ON';btn.className='fpill blind-on';
-    document.getElementById('sc-mpill').textContent='BLIND';document.getElementById('sc-mpill').className='sc-mpill blind';
-    showToast('Blind Count ON — entries overwrite totals')}
-  else{btn.textContent='Blind Count';btn.className='fpill';
-    document.getElementById('sc-mpill').textContent='INCREMENTAL';document.getElementById('sc-mpill').className='sc-mpill inc';showToast('Blind Count OFF')}
-}
+      <div class="header-right">
+        <!-- Legend is rendered by script.js from the same color constants as events -->
+        <div class="header-legend" id="header-legend" aria-label="Location color key"></div>
 
-async function loadCounts(){
-  try{const{data,error}=await db.from(CT).select('*');if(error)throw error;
-    counts={};(data||[]).forEach(r=>{counts[r.material_id]=r});setConn('live');updLS();updQBadge()}
-  catch(e){setConn('error');showToast('Could not load counts')}
-}
-async function loadQuarantine(){
-  try{const{data,error}=await db.from(QT).select('*').order('logged_at',{ascending:false});
-    if(error)throw error;quaranItems=data||[];updQBadge()}catch(e){}
-}
+        <nav class="view-switcher" aria-label="Calendar view">
+          <button class="view-btn active" data-view="month" aria-pressed="true">Month</button>
+          <button class="view-btn" data-view="week" aria-pressed="false">Week</button>
+          <button class="view-btn" data-view="day" aria-pressed="false">Day</button>
+        </nav>
+      </div>
+    </header>
 
-function subscribeRT(){
-  db.channel('cerr_live')
-    .on('postgres_changes',{event:'*',schema:'public',table:CT},pl=>{
-      const id=(pl.new||pl.old||{}).material_id;if(!id)return;
-      if(pl.eventType==='DELETE')delete counts[id];else counts[id]=pl.new;
-      updateRow(id);updQBadge();updLS();
-    })
-    .on('postgres_changes',{event:'*',schema:'public',table:QT},pl=>{
-      loadQuarantine().then(()=>{updQBadge();if(activeTab==='queue')renderQueue()});
-    })
-    .subscribe(s=>{if(s==='SUBSCRIBED')setConn('live');if(s==='CHANNEL_ERROR')setConn('error')});
-}
+    <!-- Upcoming Deliveries Bar -->
+    <section class="upcoming-bar" aria-label="Upcoming deliveries">
+      <div class="upcoming-label">
+        <span class="upcoming-icon" aria-hidden="true">◷</span>
+        <span>Upcoming</span>
+      </div>
+      <div class="upcoming-scroll" id="upcoming-scroll" role="list" aria-label="Upcoming delivery chips">
+        <div class="upcoming-events" id="upcoming-events"></div>
+      </div>
+      <button class="add-event-btn" id="add-event-btn" aria-label="Log new delivery">
+        <span aria-hidden="true">+</span> New Delivery
+      </button>
+    </section>
 
-function sched(id,snap){if(saveTimers[id])clearTimeout(saveTimers[id]);saveTimers[id]=setTimeout(()=>saveRow(id,snap),700)}
-async function saveRow(id,snap){
-  setConn('saving');
-  try{if(!snap){const{e}=await db.from(CT).delete().eq('material_id',id);if(e)throw e}
-    else{const{error}=await db.from(CT).upsert({material_id:id,physical_qty:snap.physical_qty,counted_by:snap.counted_by,
-      notes:snap.notes||'',flag_type:snap.flag_type||null,flagged_by:snap.flagged_by||null,
-      flagged_at:snap.flagged_at||null,audit_status:snap.audit_status||null,
-      updated_at:new Date().toISOString()},{onConflict:'material_id'});if(error)throw error}
-    setConn('live');
-  }catch(e){setConn('error');showToast('Save failed')}
-}
+    <!-- Calendar Main Area -->
+    <main class="calendar-container" id="calendar-container" aria-label="Receiving calendar grid"></main>
 
-function onQtyKd(e,id,el){if(e.key==='Enter'){e.preventDefault();el.blur()}if(e.key==='Escape'){revert(id);el.blur()}}
-function onQtyBlur(id,el){
-  if(!dirty.has(id)||pending)return;
-  if(document.getElementById('confirm-modal').style.display!=='none')return;
-  const val=el.value.trim();el.style.borderColor='';
-  if(val===''){dirty.delete(id);return}
-  const n=parseInt(val,10);if(isNaN(n)){el.style.borderColor='var(--bad)';return}
-  if(!blindMode&&n===0){dirty.delete(id);el.value='';return}
-  const pq=counts[id]!=null?counts[id].physical_qty:null;
-  pending={id,delta:n,pq};showCM(id,n,pq);
-}
+    <!-- Loading overlay -->
+    <div class="db-overlay" id="db-loading" aria-live="polite" style="display:none">
+      <div class="db-overlay-box">
+        <div class="db-spinner"></div>
+        <p>Loading deliveries…</p>
+      </div>
+    </div>
 
-function showCM(id,delta,pq){
-  const mat=MATS.find(m=>m.material_id===id);if(!mat)return;
-  const sap=Number(mat.sap_qty),prev=pq!=null?pq:0;
-  const nt=blindMode?delta:prev+delta,diff=nt-sap;
-  document.getElementById('cm-id').textContent=id;document.getElementById('cm-desc').textContent=mat.description;
-  document.getElementById('cm-sap').textContent=sap.toLocaleString();
-  document.getElementById('cm-prev').textContent=pq!=null?pq.toLocaleString():'None';
-  const ce=document.getElementById('cm-entry');
-  ce.textContent=blindMode?delta.toLocaleString():(delta>0?'+':'')+delta.toLocaleString();
-  ce.className='cmv hi'+(delta<0&&!blindMode?' bad':'');
-  const te=document.getElementById('cm-total');te.textContent=nt.toLocaleString();te.className='cmv '+(diff===0?'ok':'bad');
-  const ve=document.getElementById('cm-var');ve.textContent=(diff>=0?'+':'')+diff.toLocaleString();ve.className='cmv '+(diff===0?'ok':'bad');
-  document.getElementById('cm-blind').style.display=blindMode?'block':'none';
-  const btn=document.getElementById('confirm-btn');btn.disabled=false;btn.textContent='Confirm';
-  document.getElementById('confirm-modal').style.display='flex';
-}
-function confirmEntry(){
-  if(!pending)return;const{id,delta,pq}=pending;
-  document.getElementById('confirm-btn').disabled=true;
-  const prev=pq!=null?pq:0,nt=blindMode?delta:prev+delta;
-  counts[id]={material_id:id,physical_qty:nt,counted_by:currentUser,
-    notes:(counts[id]||{}).notes||'',flag_type:(counts[id]||{}).flag_type||null,
-    flagged_by:(counts[id]||{}).flagged_by||null,flagged_at:(counts[id]||{}).flagged_at||null,
-    audit_status:(counts[id]||{}).audit_status||null,updated_at:new Date().toISOString()};
-  const snap={...counts[id]};dirty.delete(id);clrQtyIn(id);
-  updateRow(id);if(activeTab==='totals')renderTotals();sched(id,snap);
-  pending=null;document.getElementById('confirm-modal').style.display='none';beep('ok');
-}
-function cancelEntry(){if(pending){dirty.delete(pending.id);revert(pending.id);pending=null}document.getElementById('confirm-modal').style.display='none'}
-function clrQtyIn(id){const c=document.querySelector(`#card-${id} .rqty`);if(c)c.value='';const t=document.getElementById('tqin-'+id);if(t)t.value=''}
-function revert(id){dirty.delete(id);const c=document.querySelector(`#card-${id} .rqty`);if(c){c.value='';c.style.borderColor=''}const t=document.getElementById('tqin-'+id);if(t){t.value='';t.style.borderColor=''}}
-function onCmOverlay(e){if(e.target===document.getElementById('confirm-modal'))cancelEntry()}
-function onNotesChange(id,el){if(counts[id]){counts[id].notes=el.value.trim();sched(id,{...counts[id]})}}
+    <!-- Error overlay -->
+    <div class="db-overlay" id="db-error" style="display:none">
+      <div class="db-overlay-box db-overlay-error">
+        <span class="db-error-icon">⚠</span>
+        <p id="db-error-msg">Could not connect to database.</p>
+        <button class="btn-primary" id="db-retry-btn">Retry</button>
+      </div>
+    </div>
 
-/* Flags */
-function openFlagSheet(id){
-  flagId=id;const mat=MATS.find(m=>m.material_id===id),c=counts[id];
-  document.getElementById('fs-title').textContent=mat?`⚑ ${mat.description.substring(0,36)}`:'Flag material';
-  document.getElementById('fs-clear').style.display=c&&c.flag_type?'flex':'none';
-  document.getElementById('flagsheet').classList.add('open');
-}
-function closeFlagSheet(){document.getElementById('flagsheet').classList.remove('open');flagId=null}
-function onFsOverlay(e){if(e.target===document.getElementById('flagsheet'))closeFlagSheet()}
-function doFlag(type){
-  const id=flagId;closeFlagSheet();if(!id)return;
-  if(!counts[id])counts[id]={material_id:id,physical_qty:null,counted_by:currentUser,notes:'',updated_at:new Date().toISOString()};
-  if(type===null){counts[id].flag_type=null;counts[id].flagged_by=null;counts[id].flagged_at=null;counts[id].audit_status=null}
-  else{counts[id].flag_type=type;counts[id].flagged_by=currentUser;counts[id].flagged_at=new Date().toISOString();counts[id].audit_status='needs_reconciliation'}
-  const snap={...counts[id]};updateRow(id);updQBadge();sched(id,snap);
-  beep(type?'flag':'ok');showToast(type?'Flagged — added to queue':'Flag cleared');
-}
+  </div>
 
-async function markResolved(id){
-  if(!counts[id])return;counts[id].audit_status='reconciled';const snap={...counts[id]};
-  updateRow(id);sched(id,snap);renderQueue();updQBadge();showToast('Marked resolved');
-}
-
-function updQBadge(){
-  const n=Object.values(counts).filter(c=>c.audit_status==='needs_reconciliation').length+quaranItems.filter(q=>q.status==='pending').length;
-  const b=document.getElementById('q-badge');b.textContent=n;b.style.display=n>0?'flex':'none';
-}
-
-/* Quarantine */
-function openQuarantine(prefill){
-  document.getElementById('quar-value').value=prefill||'';
-  document.getElementById('quar-desc').value='';document.getElementById('quar-loc').value='';
-  document.getElementById('quar-dlg').classList.add('open');
-  setTimeout(()=>document.getElementById('quar-desc').focus(),100);
-}
-function closeQuarantine(){document.getElementById('quar-dlg').classList.remove('open')}
-function onQuarOverlay(e){if(e.target===document.getElementById('quar-dlg'))closeQuarantine()}
-async function submitQuarantine(){
-  const val=document.getElementById('quar-value').value.trim();
-  const desc=document.getElementById('quar-desc').value.trim();
-  const loc=document.getElementById('quar-loc').value.trim();
-  if(!desc){showToast('Please describe the item');return}
-  try{const{error}=await db.from(QT).insert({scanned_value:val,description:desc,location_note:loc,logged_by:currentUser,logged_at:new Date().toISOString(),status:'pending'});
-    if(error)throw error;closeQuarantine();beep('flag');showToast('Item logged to quarantine');
-    await loadQuarantine();updQBadge();if(activeTab==='queue')renderQueue();
-  }catch(e){showToast('Failed to log item');console.error(e)}
-}
-async function resolveQuarantine(id){
-  try{const{error}=await db.from(QT).update({status:'resolved',resolved_by:currentUser,resolved_at:new Date().toISOString()}).eq('id',id);
-    if(error)throw error;await loadQuarantine();updQBadge();renderQueue();showToast('Quarantine item resolved');
-  }catch(e){showToast('Failed to resolve')}
-}
-
-/* Scanner */
-function openScanner(){
-  document.getElementById('scanner').classList.add('open');
-  document.getElementById('sc-input').value='';
-  document.getElementById('sc-result').innerHTML=`<div class="sc-idle"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><path d="M21 16h-3v3"/></svg><div class="sc-idle-t">Ready to scan</div><div class="sc-idle-s">Point scanner or type product number</div></div>`;
-  scId=null;setTimeout(()=>document.getElementById('sc-input').focus(),100);
-}
-function closeScanner(){document.getElementById('scanner').classList.remove('open');scId=null}
-function onScKd(e){if(e.key==='Enter'){e.preventDefault();doScan()}}
-function onScTyped(){const v=document.getElementById('sc-input').value.trim();if(v.length>=7)setTimeout(()=>{if(document.getElementById('sc-input').value.trim()===v)doScan()},200)}
-function doScan(){
-  const raw=document.getElementById('sc-input').value.trim();
-  const id=parseInt(raw,10);const mat=MATS.find(m=>m.material_id===id);
-  if(!mat){beep('error');
-    document.getElementById('sc-result').innerHTML=`<div class="sc-card notfound"><div class="sc-mid">${escH(raw)}</div><div class="sc-mdesc">Material not found</div><div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:.75rem">Try quarantine if item is unidentifiable.</div><div class="sc-btns" style="margin-top:1rem"><button class="scbtn scbtn-quar" onclick="openQuarantine('${escH(raw)}')" style="grid-column:1/-1">📦 Log to Quarantine</button></div></div>`;
-    return}
-  scId=id;beep('ok');renderScCard(id);document.getElementById('sc-input').value='';
-  setTimeout(()=>{const q=document.getElementById('sc-qty');if(q)q.focus()},120);
-}
-function renderScCard(id){
-  const mat=MATS.find(m=>m.material_id===id);if(!mat)return;
-  const c=counts[id],phys=c?c.physical_qty:null,sap=Number(mat.sap_qty);
-  const diff=phys!==null?phys-sap:null,ft=c?c.flag_type:null;
-  const ftL=ft?{mismatch:'Mismatch',orphaned:'Orphaned',damaged:'Damaged',empty:'Empty'}[ft]:'';
-  document.getElementById('sc-result').innerHTML=`
-<div class="sc-card found" id="sc-main">
-<div class="sc-mid">${id}${ftL?` · <span style="color:#E8A832">⚑ ${escH(ftL)}</span>`:''}</div>
-<div class="sc-mdesc">${escH(mat.description)}</div>
-<div class="sc-mgrid">
-<span class="sc-glbl">SAP Qty</span><span class="sc-gval">${sap.toLocaleString()}</span>
-<span class="sc-glbl">Counted</span><span class="sc-gval ${phys===null?'':diff===0?'ok':'bad'}">${phys!==null?phys.toLocaleString():'—'}</span>
-<span class="sc-glbl">Variance</span><span class="sc-gval ${diff===null?'':diff===0?'ok':'bad'}">${diff!==null?(diff>=0?'+':'')+diff.toLocaleString():'—'}</span>
-</div></div>
-<div class="sc-qty-area">
-<div class="sc-lbl">${blindMode?'Set total (overwrites)':'Add count (+/−)'}</div>
-<input id="sc-qty" type="number" inputmode="decimal" step="1" placeholder="0" onkeydown="onScQKd(event)"/>
-</div>
-<div class="sc-btns">
-<button class="scbtn scbtn-ok" onclick="scConfirm()">✓ Confirm Count</button>
-<button class="scbtn scbtn-mm" onclick="scFlag('mismatch')">⚠ Mismatch</button>
-<button class="scbtn scbtn-or" onclick="scFlag('empty')">◎ Empty</button>
-<button class="scbtn scbtn-q" onclick="scFlag('orphaned')">🔍 Orphaned</button>
-${ftL?`<button class="scbtn scbtn-clr" onclick="scFlag(null)">✕ Clear Flag</button>`:''}
-</div>`;
-}
-function onScQKd(e){if(e.key==='Enter'){e.preventDefault();scConfirm()}}
-function scConfirm(){
-  if(!scId)return;const qel=document.getElementById('sc-qty');if(!qel)return;
-  const val=qel.value.trim();if(!val)return;const n=parseInt(val,10);if(isNaN(n)){showToast('Enter a valid number');return}
-  if(!blindMode&&n===0){showToast('Enter non-zero amount');return}
-  const pq=counts[scId]!=null?counts[scId].physical_qty:null,prev=pq!=null?pq:0,nt=blindMode?n:prev+n;
-  counts[scId]={material_id:scId,physical_qty:nt,counted_by:currentUser,
-    notes:(counts[scId]||{}).notes||'',flag_type:(counts[scId]||{}).flag_type||null,
-    flagged_by:(counts[scId]||{}).flagged_by||null,flagged_at:(counts[scId]||{}).flagged_at||null,
-    audit_status:(counts[scId]||{}).audit_status||null,updated_at:new Date().toISOString()};
-  const snap={...counts[scId]};dirty.delete(scId);clrQtyIn(scId);updateRow(scId);sched(scId,snap);beep('ok');
-  const card=document.getElementById('sc-main');if(card){card.classList.add('fok');setTimeout(()=>card.classList.remove('fok'),400)}
-  qel.value='';setTimeout(()=>renderScCard(scId),430);
-}
-function scFlag(type){if(!scId)return;flagId=scId;doFlag(type);setTimeout(()=>renderScCard(scId),200)}
-
-/* Guided cycle count */
-let guideList=[],guideIdx=0;
-function buildGuideList(){
-  const flagged=[];const highVar=[];const uncounted=[];
-  MATS.forEach(m=>{const c=counts[m.material_id];const sap=Number(m.sap_qty);
-    if(c&&c.flag_type){flagged.push({...m,priority:'high',reason:'Flagged: '+c.flag_type})}
-    else if(c&&c.physical_qty!==null&&Math.abs(c.physical_qty-sap)>sap*0.1&&sap>0){highVar.push({...m,priority:'med',reason:'Large variance'})}
-    else if(!c||c.physical_qty===null){uncounted.push({...m,priority:'low',reason:'Not yet counted'})}
-  });
-  uncounted.sort((a,b)=>Number(b.sap_qty)-Number(a.sap_qty));
-  return[...flagged,...highVar,...uncounted.slice(0,20)];
-}
-function renderGuided(){
-  guideList=buildGuideList();guideIdx=0;showGuideCard();
-}
-function showGuideCard(){
-  const el=document.getElementById('guide-content');
-  if(!guideList.length){el.innerHTML=`<div class="guide-done"><div class="guide-done-icon">✅</div><div class="guide-done-title">Nothing to review</div><div class="guide-done-sub">All items are counted with no significant variances.</div></div>`;return}
-  if(guideIdx>=guideList.length){
-    el.innerHTML=`<div class="guide-done"><div class="guide-done-icon">🎉</div><div class="guide-done-title">Guided count complete!</div><div class="guide-done-sub">${guideList.length} items reviewed.</div><button class="gbtn gbtn-skip" style="margin:0 auto;padding:0 2rem" onclick="renderGuided()">Start Over</button></div>`;return}
-  const m=guideList[guideIdx],c=counts[m.material_id],phys=c?c.physical_qty:null;
-  const sap=Number(m.sap_qty),diff=phys!==null?phys-sap:null;
-  const prog=`${guideIdx+1} of ${guideList.length}`;
-  el.innerHTML=`
-<div class="guide-header">
-<div class="guide-title">Guided Count</div>
-<div class="guide-prog-text">${prog}</div>
-</div>
-<div class="progress-bar" style="height:4px;background:var(--surf2);border-radius:2px;overflow:hidden;margin-bottom:.5rem">
-<div style="height:100%;width:${Math.round((guideIdx/guideList.length)*100)}%;background:var(--amber);transition:width .4s"></div>
-</div>
-<div class="guide-card priority-${m.priority||'low'}">
-<div class="guide-matid">${m.material_id} · <span style="font-size:11px;padding:1px 6px;border-radius:99px;background:var(--surf2);color:var(--tx3)">${m.reason||''}</span></div>
-<div class="guide-desc">${escH(m.description)}</div>
-<div class="guide-stat-grid">
-<span class="gs-lbl">SAP Qty</span><span class="gs-val muted">${sap.toLocaleString()}</span>
-<span class="gs-lbl">Last Count</span><span class="gs-val ${phys===null?'muted':diff===0?'ok':'bad'}">${phys!==null?phys.toLocaleString():'Not counted'}</span>
-<span class="gs-lbl">Variance</span><span class="gs-val ${diff===null?'muted':diff===0?'ok':'bad'}">${diff!==null?(diff>=0?'+':'')+diff.toLocaleString():'—'}</span>
-</div>
-<div class="guide-qty-row">
-<div class="guide-qty-lbl">${blindMode?'Set total count (overwrites)':'Add count (+/−)'}</div>
-<input id="guide-qty" class="guide-qty-in" type="number" inputmode="decimal" step="1" placeholder="0" onkeydown="if(event.key==='Enter'){event.preventDefault();guideConfirm()}"/>
-</div>
-<div class="guide-actions">
-<button class="gbtn gbtn-confirm" onclick="guideConfirm()">✓ Confirm Count</button>
-<button class="gbtn gbtn-flag" onclick="flagId=${m.material_id};document.getElementById('fs-title').textContent='Flag: ${escH(m.description.substring(0,30))}';document.getElementById('fs-clear').style.display='${c&&c.flag_type?'flex':'none'}';document.getElementById('flagsheet').classList.add('open')">⚑ Flag Issue</button>
-<button class="gbtn gbtn-skip" onclick="guideSkip()">Skip →</button>
-</div>
-</div>`;
-  setTimeout(()=>{const q=document.getElementById('guide-qty');if(q)q.focus()},100);
-}
-function guideConfirm(){
-  const m=guideList[guideIdx];if(!m)return;
-  const val=document.getElementById('guide-qty').value.trim();
-  if(!val||val==='0'){showToast('Enter a count first');return}
-  const n=parseInt(val,10);if(isNaN(n)){showToast('Invalid number');return}
-  const pq=counts[m.material_id]!=null?counts[m.material_id].physical_qty:null,prev=pq!=null?pq:0;
-  const nt=blindMode?n:prev+n;
-  counts[m.material_id]={material_id:m.material_id,physical_qty:nt,counted_by:currentUser,
-    notes:(counts[m.material_id]||{}).notes||'',flag_type:(counts[m.material_id]||{}).flag_type||null,
-    flagged_by:(counts[m.material_id]||{}).flagged_by||null,flagged_at:(counts[m.material_id]||{}).flagged_at||null,
-    audit_status:(counts[m.material_id]||{}).audit_status||null,updated_at:new Date().toISOString()};
-  sched(m.material_id,{...counts[m.material_id]});beep('ok');guideIdx++;showGuideCard();
-}
-function guideSkip(){guideIdx++;showGuideCard()}
-
-/* DOM helpers */
-function fmtT(iso){if(!iso)return'';return new Date(iso).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}
-function vi(phys,sap){
-  if(phys===null||phys===undefined)return{cls:'none',tcls:'tv-none',txt:'—'};
-  const d=phys-sap;return{cls:d===0?'ok':d>0?'pos':'neg',tcls:d===0?'tv-ok':d>0?'tv-pos':'tv-neg',txt:(d>=0?'+':'')+d.toLocaleString()};
-}
-function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function rfc(c){if(!c||!c.flag_type)return'';return{mismatch:'r-mm',orphaned:'r-or',damaged:'r-dm',empty:'r-em'}[c.flag_type]||''}
-function fchip(c){if(!c||!c.flag_type)return'';return`<span class="fchip ${c.flag_type}">${{mismatch:'Mismatch',orphaned:'Orphaned',damaged:'Damaged',empty:'Empty'}[c.flag_type]}</span>`}
-function fbc(c){if(!c||!c.flag_type)return'';return`fl-${{mismatch:'mm',orphaned:'or',damaged:'dm',empty:'em'}[c.flag_type]||''}`}
-function fsvg(c){return c&&c.flag_type?'currentColor':'none'}
-
-function updateRow(id){
-  const mat=MATS.find(m=>m.material_id===id);if(!mat)return;
-  const c=counts[id],phys=c?c.physical_qty:null;
-  const{cls,tcls,txt}=vi(phys,mat.sap_qty);
-  const dotcls=phys===null?'':(phys===mat.sap_qty?'ok':'bad');
-  const rowcls=(phys===null?'':phys===mat.sap_qty?'r-ok':'r-bad')+' '+rfc(c);
-  const card=document.getElementById('card-'+id);
-  if(card){
-    card.className=`mrow ${rowcls.trim()}`;
-    const d=card.querySelector('.rdot');if(d)d.className=`rdot ${dotcls}`;
-    const rv=document.getElementById('rv-'+id);if(rv){rv.textContent=txt;rv.className=`rvar ${cls}`}
-    const qi=card.querySelector('.rqty');if(qi&&!dirty.has(id))qi.value='';
-    const fb=card.querySelector('.fbtn');if(fb)fb.className=`fbtn ${fbc(c)}`;
-    const meta=card.querySelector('.rmeta');
-    if(meta)meta.innerHTML=`${id} &nbsp;·&nbsp; SAP ${Number(mat.sap_qty).toLocaleString()} ${fchip(c)}`;
-  }
-  const row=document.getElementById('row-'+id);
-  if(row){
-    row.className=c&&c.flag_type?'tr-flag':(phys!==null?(phys===mat.sap_qty?'tr-ok':'tr-bad'):'');
-    const tv=document.getElementById('tvar-'+id);if(tv){tv.textContent=txt;tv.className=`tvar ${tcls}`}
-    const tt=document.getElementById('ttot-'+id);if(tt){tt.textContent=phys!==null?Number(phys).toLocaleString():'—';tt.className=`tvar ${tcls}`}
-    const tby=document.getElementById('tby-'+id);if(tby)tby.textContent=c?(c.counted_by||''):'';
-    const tts=document.getElementById('tts-'+id);if(tts)tts.textContent=c?fmtT(c.updated_at):'';
-    const tqi=document.getElementById('tqin-'+id);if(tqi&&!dirty.has(id))tqi.value='';
-  }
-  updGrpHdr(grp(mat.description));
-}
-
-function toggleGrp(name){
-  gex[name]=!gex[name];
-  const items=document.getElementById('gi-'+name),chev=document.getElementById('gc-'+name);
-  if(items)items.classList.toggle('hidden',!gex[name]);if(chev)chev.classList.toggle('closed',!gex[name]);
-}
-function updGrpHdr(name){
-  const mats=MATS.filter(m=>grp(m.description)===name);
-  const cnt=mats.filter(m=>counts[m.material_id]!=null&&counts[m.material_id].physical_qty!==null).length;
-  const total=mats.length,pct=total?Math.round((cnt/total)*100):0,done=cnt===total&&total>0;
-  const b=document.getElementById('gb-'+name);if(b){b.textContent=`${cnt} / ${total}`;b.className='grp-badge'+(done?' done':'')}
-  const bar=document.getElementById('gbr-'+name);if(bar)bar.style.width=pct+'%';
-}
-
-function renderAll(){renderCards();renderTbl();applyFilters()}
-
-function renderCards(){
-  const list=document.getElementById('card-list');
-  const groups={};GORD.forEach(g=>{groups[g]=[]});
-  MATS.forEach(m=>{const g=grp(m.description);if(groups[g])groups[g].push(m)});
-  GORD.forEach(g=>{if(gex[g]===undefined)gex[g]=true});
-  let html='';
-  GORD.forEach(name=>{
-    const mats=groups[name];if(!mats.length)return;
-    const cnt=mats.filter(m=>counts[m.material_id]!=null&&counts[m.material_id].physical_qty!==null).length;
-    const total=mats.length,pct=Math.round((cnt/total)*100),done=cnt===total,exp=gex[name];
-    html+=`<div class="grp-sec" id="grp-${name}">
-<button class="grp-hdr" onclick="toggleGrp('${name}')">
-<span class="grp-ico">${GICO[name]||'📋'}</span>
-<div class="grp-body"><span class="grp-name">${name}</span>
-<div class="grp-sub"><span id="gb-${name}" class="grp-badge${done?' done':''}">${cnt} / ${total}</span>
-<div class="grp-bar-wrap"><div class="grp-bar-fill" id="gbr-${name}" style="width:${pct}%"></div></div></div></div>
-<span class="grp-chev${exp?'':' closed'}" id="gc-${name}">›</span>
-</button>
-<div class="grp-items${exp?'':' hidden'}" id="gi-${name}">`;
-    mats.forEach(({material_id:id,description:desc,sap_qty:sap})=>{
-      const c=counts[id],phys=c?c.physical_qty:null;
-      const{cls,txt}=vi(phys,sap);
-      const dotcls=phys===null?'':(phys===sap?'ok':'bad');
-      const rowcls=(phys===null?'':phys===sap?'r-ok':'r-bad')+' '+rfc(c);
-      html+=`<div class="mrow ${rowcls.trim()}" id="card-${id}">
-<span class="rdot ${dotcls}"></span>
-<div class="rinfo">
-<div class="rdesc">${escH(desc)}</div>
-<div class="rmeta">${id} &nbsp;·&nbsp; SAP ${Number(sap).toLocaleString()} ${fchip(c)}</div>
-</div>
-<div class="rright">
-<input class="rqty" type="number" inputmode="decimal" step="1" placeholder="0" value=""
-       oninput="dirty.add(${id})" onkeydown="onQtyKd(event,${id},this)" onblur="onQtyBlur(${id},this)"/>
-<span class="rvar ${cls}" id="rv-${id}">${txt}</span>
-</div>
-<button class="fbtn ${fbc(c)}" onclick="openFlagSheet(${id})" title="Flag">
-<svg width="14" height="14" viewBox="0 0 24 24" fill="${fsvg(c)}" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-</button>
-</div>`;
-    });
-    html+=`</div></div>`;
-  });
-  list.innerHTML=html||`<div class="norows">No materials loaded.</div>`;
-}
-
-function renderTbl(){
-  const tbody=document.getElementById('tbl-body');let html='';
-  MATS.forEach(({material_id:id,description:desc,sap_qty:sap})=>{
-    const c=counts[id],phys=c?c.physical_qty:null;
-    const{tcls,txt}=vi(phys,sap);
-    const rc=c&&c.flag_type?'tr-flag':(phys!==null?(phys===sap?'tr-ok':'tr-bad'):'');
-    html+=`<tr id="row-${id}" class="${rc}">
-<td><span class="tm">${id}</span></td>
-<td><span class="td">${escH(desc)}</span>${fchip(c)?`<br>${fchip(c)}`:''}</td>
-<td class="r"><span class="tsap">${Number(sap).toLocaleString()}</span></td>
-<td class="r"><input class="tqin" id="tqin-${id}" type="number" inputmode="decimal" step="1" placeholder="0" value=""
-  oninput="dirty.add(${id})" onkeydown="onQtyKd(event,${id},this)" onblur="onQtyBlur(${id},this)"/></td>
-<td class="r"><span class="tvar ${tcls}" id="ttot-${id}">${phys!==null?Number(phys).toLocaleString():'—'}</span></td>
-<td class="r"><span class="tvar ${tcls}" id="tvar-${id}">${txt}</span></td>
-<td><span class="tby" id="tby-${id}">${escH(c?(c.counted_by||''):'')} </span></td>
-<td><input class="tnotes" type="text" placeholder="notes…" value="${escH(c?(c.notes||''):'')}
-" onchange="onNotesChange(${id},this)"/></td>
-<td><span class="ttime" id="tts-${id}">${c?fmtT(c.updated_at):''}</span></td>
-<td><button class="fbtn ${fbc(c)}" onclick="openFlagSheet(${id})">
-<svg width="13" height="13" viewBox="0 0 24 24" fill="${fsvg(c)}" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
-</button></td>
-</tr>`;
-  });
-  tbody.innerHTML=html||`<tr><td colspan="10" class="norows">No materials.</td></tr>`;
-}
-
-/* Queue tab */
-function renderQueue(){
-  const flagged=Object.values(counts).filter(c=>c.audit_status==='needs_reconciliation');
-  const resolved=Object.values(counts).filter(c=>c.audit_status==='reconciled');
-  const qPending=quaranItems.filter(q=>q.status==='pending');
-  const qResolved=quaranItems.filter(q=>q.status!=='pending');
-  let html=`<div class="q-hdr"><div class="q-title">Audit Queue</div><span style="font-size:13px;color:var(--tx3)">${flagged.length} flagged · ${qPending.length} quarantine</span></div>`;
-
-  if(!flagged.length&&!qPending.length&&!resolved.length&&!qResolved.length){
-    html+='<div class="rlist"><div class="emptysec">Queue is clear ✓</div></div>';
-  }
-
-  if(flagged.length){
-    html+=`<div class="sechead">Flagged Items <span class="seccnt bad">${flagged.length}</span></div>`;
-    flagged.sort((a,b)=>new Date(b.flagged_at||b.updated_at)-new Date(a.flagged_at||a.updated_at)).forEach(c=>{
-      const mat=MATS.find(m=>m.material_id===c.material_id);if(!mat)return;
-      const sap=Number(mat.sap_qty),phys=c.physical_qty,diff=phys!==null?phys-sap:null;
-      const ft=c.flag_type||'unknown';
-      html+=`<div class="qitem">
-<div class="qitem-head"><span class="qflag ${ft}">${ft}</span>
-<div class="qinfo"><div class="qi-desc">${escH(mat.description)}</div>
-<div class="qi-meta">${mat.material_id} · By ${escH(c.flagged_by||'—')} · ${c.flagged_at?new Date(c.flagged_at).toLocaleString():'—'}</div></div></div>
-<div class="qbody">
-<span class="ql">SAP</span><span class="qv">${sap.toLocaleString()}</span>
-<span class="ql">Physical</span><span class="qv">${phys!==null?phys.toLocaleString():'Not counted'}</span>
-<span class="ql">Variance</span><span class="qv" style="color:${diff===null?'var(--tx3)':diff===0?'var(--ok)':'var(--bad)'}">${diff!==null?(diff>=0?'+':'')+diff.toLocaleString():'—'}</span>
-</div>
-<div class="qacts">
-<button class="qbtn qbtn-link" onclick="openFlagSheet(${mat.material_id})">Re-flag</button>
-<button class="qbtn" onclick="switchTab('count');setTimeout(()=>{const el=document.getElementById('card-${mat.material_id}');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},300)">View</button>
-<button class="qbtn qbtn-ok" onclick="markResolved(${mat.material_id})">✓ Resolved</button>
-</div></div>`;
-    });
-  }
-
-  if(qPending.length){
-    html+=`<div class="sechead">Quarantine — Unidentified Items <span class="seccnt">${qPending.length}</span></div>`;
-    qPending.forEach(q=>{
-      html+=`<div class="qitem">
-<div class="qitem-head"><span class="qflag quarantine">QUARANTINE</span>
-<div class="qinfo"><div class="qi-desc">${escH(q.description||'No description')}</div>
-<div class="qi-meta">Scanned: ${escH(q.scanned_value||'N/A')} · By ${escH(q.logged_by||'—')} · ${new Date(q.logged_at).toLocaleString()}</div></div></div>
-<div class="qbody">
-<span class="ql">Location</span><span class="qv" style="font-family:inherit;font-weight:400">${escH(q.location_note||'—')}</span>
-<span class="ql">Status</span><span class="qv">${q.status}</span>
-</div>
-<div class="qacts">
-<button class="qbtn qbtn-ok" onclick="resolveQuarantine('${q.id}')">✓ Resolved</button>
-</div></div>`;
-    });
-  }
-
-  if(resolved.length){
-    html+=`<div class="sechead">Recently Resolved <span class="seccnt">${resolved.length}</span></div><div class="rlist">`;
-    resolved.slice(-8).reverse().forEach(c=>{
-      const mat=MATS.find(m=>m.material_id===c.material_id);if(!mat)return;
-      html+=`<div class="ri"><div class="ri-desc">${escH(mat.description)}</div><span class="qflag resolved">Resolved</span><div class="ri-id">${mat.material_id}</div></div>`;
-    });html+='</div>';
-  }
-
-  document.getElementById('q-content').innerHTML=html;
-}
-
-/* Totals */
-function renderTotals(){
-  const total=MATS.length;
-  const counted=MATS.filter(m=>counts[m.material_id]!=null&&counts[m.material_id].physical_qty!==null).length;
-  const remain=total-counted,pct=total?Math.round((counted/total)*100):0;
-  let tSAP=0,tPhys=0;const wv=[],unc=[];
-  MATS.forEach(({material_id:id,description:desc,sap_qty:sap})=>{
-    const c=counts[id];if(c&&c.physical_qty!==null&&c.physical_qty!==undefined){
-      tSAP+=Number(sap);tPhys+=c.physical_qty;
-      if(c.physical_qty!==sap)wv.push({id,desc,sap:Number(sap),phys:c.physical_qty,diff:c.physical_qty-Number(sap)});
-    }else unc.push({id,desc,sap:Number(sap)});
-  });
-  wv.sort((a,b)=>Math.abs(b.diff)-Math.abs(a.diff));const nv=tPhys-tSAP;
-  let html=`<div class="prog-card"><div class="prog-lbl">Progress</div>
-<div class="prog-bar"><div class="prog-fill" style="width:${pct}%"></div></div>
-<div class="prog-nums">
-<div class="pn"><span class="pn-val ok">${counted}</span><span class="pn-lbl">Counted</span></div>
-<div class="pn"><span class="pn-val amber">${remain}</span><span class="pn-lbl">Remaining</span></div>
-<div class="pn"><span class="pn-val muted">${pct}%</span><span class="pn-lbl">Complete</span></div>
-</div></div>
-<div class="sgrid">
-<div class="scard"><div class="slbl">SAP Total</div><div class="sval">${tSAP.toLocaleString()}</div></div>
-<div class="scard"><div class="slbl">Physical</div><div class="sval">${tPhys.toLocaleString()}</div></div>
-<div class="scard"><div class="slbl">Net Variance</div><div class="sval ${nv===0?'ok':'bad'}">${(nv>=0?'+':'')+nv.toLocaleString()}</div></div>
-<div class="scard"><div class="slbl">Items w/ Variance</div><div class="sval ${wv.length?'bad':'ok'}">${wv.length}</div></div>
-</div>`;
-  html+=`<div><div class="sechead">Variance Items <span class="seccnt${wv.length?' bad':''}">${wv.length}</span></div>`;
-  if(wv.length){html+='<div class="rlist">';wv.forEach(({id,desc,sap,phys,diff})=>{
-    const cls=diff>0?'pos':'neg',sign=diff>0?'+':'';
-    html+=`<div class="ri"><div class="ri-desc">${escH(desc)}</div><div class="ri-var ${cls}">${sign}${diff.toLocaleString()}</div><div class="ri-qtys ri-id">${id} · SAP: ${sap.toLocaleString()} → ${phys.toLocaleString()}</div></div>`;
-  });html+='</div>';}else html+='<div class="rlist"><div class="emptysec">'+(counted?'No variances ✓':'No items counted yet.')+'</div></div>';
-  html+='</div>';
-  html+=`<div><div class="sechead">Uncounted <span class="seccnt">${unc.length}</span></div>`;
-  if(unc.length){html+='<div class="rlist">';unc.forEach(({id,desc,sap})=>{
-    html+=`<div class="ri"><div class="ri-desc">${escH(desc)}</div><div class="ri-sap">${sap.toLocaleString()}</div><div class="ri-id">${id}</div></div>`;
-  });html+='</div>';}else html+='<div class="rlist"><div class="emptysec">All items counted ✓</div></div>';
-  html+='</div>';
-  document.getElementById('tot-content').innerHTML=html;
-}
-
-/* Filters */
-function updLS(){const t='Synced '+new Date().toLocaleTimeString();['ls-desktop','ls-mobile'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=t})}
-function setFilter(btn){document.querySelectorAll('.fpill[data-f]').forEach(b=>b.classList.remove('on'));btn.classList.add('on');activeFilter=btn.dataset.f;applyFilters()}
-function applyFilters(){
-  const q=(document.getElementById('search')||{}).value||'';const ql=q.trim();
-  const gv={};GORD.forEach(g=>{gv[g]=0});let vis=0;
-  const fr=ql?fuzzyFilter(ql,MATS):null;const fids=fr?new Set(fr.map(m=>m.material_id)):null;
-  MATS.forEach(({material_id:id,description:desc,sap_qty:sap})=>{
-    const c=counts[id],phys=c?c.physical_qty:null;
-    let pass=true;
-    if(activeFilter==='uncounted')pass=phys===null||phys===undefined;
-    else if(activeFilter==='counted')pass=phys!==null&&phys!==undefined;
-    else if(activeFilter==='variance')pass=phys!==null&&phys!==undefined&&phys!==sap;
-    else if(activeFilter==='flagged')pass=!!(c&&(c.flag_type||c.audit_status==='needs_reconciliation'));
-    if(pass&&fids)pass=fids.has(id);
-    const show=pass?'':'none';
-    const card=document.getElementById('card-'+id);if(card)card.style.display=show;
-    const row=document.getElementById('row-'+id);if(row)row.style.display=show;
-    if(pass){vis++;gv[grp(desc)]++}
-  });
-  GORD.forEach(name=>{const g=document.getElementById('grp-'+name);if(g)g.style.display=gv[name]>0?'':'none'});
-  const lbl=`Showing ${vis} of ${MATS.length}`;
-  ['rc-mobile','rc-desktop'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=lbl});
-}
-
-/* Export */
-function exportCSV(){
-  const rows=[['Material','Description','SAP Qty','Physical Qty','Variance','Counted By','Flag','Audit Status','Notes','Timestamp'].join(',')];
-  MATS.forEach(({material_id:id,description:desc,sap_qty:sap})=>{
-    const c=counts[id],phys=(c&&c.physical_qty!==null)?c.physical_qty:'',diff=phys!==''?phys-sap:'';
-    rows.push([id,`"${String(desc).replace(/"/g,'""')}"`,sap,phys,diff,
-      `"${c?(c.counted_by||''):''}"`,`"${c?(c.flag_type||''):''}"`,`"${c?(c.audit_status||''):''}"`,
-      `"${c?String(c.notes||'').replace(/"/g,'""'):''}"`  ,`"${c&&c.updated_at?new Date(c.updated_at).toLocaleString():''}"`].join(','));
-  });
-  const url=URL.createObjectURL(new Blob([rows.join('\n')],{type:'text/csv;charset=utf-8;'}));
-  const a=Object.assign(document.createElement('a'),{href:url,download:`cerritos_${new Date().toISOString().slice(0,10)}.csv`});
-  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);showToast('CSV exported');
-}
-
-/* Clear day */
-function showClearModal(){document.getElementById('clr-btn').disabled=false;document.getElementById('clr-btn').textContent='Clear everything';document.getElementById('clear-modal').style.display='flex'}
-function hideClear(){document.getElementById('clear-modal').style.display='none'}
-function onClrOverlay(e){if(e.target===document.getElementById('clear-modal'))hideClear()}
-async function clearAll(){
-  const btn=document.getElementById('clr-btn');btn.disabled=true;btn.textContent='Clearing…';
-  try{
-    await db.from(CT).delete().not('material_id','is',null);
-    await db.from(QT).delete().not('id','is',null);
-    await db.from(MT).delete().gt('material_id',0);
-    counts={};MATS=[];quaranItems=[];hideClear();showToast('All data cleared');setTimeout(goBack,1200);
-  }catch(e){btn.disabled=false;btn.textContent='Clear everything';showToast('Clear failed')}
-}
-
-/* Conn */
-function setConn(s){
-  const dot=document.getElementById('cdot'),lbl=document.getElementById('clbl');
-  dot.className='dot'+(s!=='connecting'?' '+s:'');
-  lbl.textContent={live:'Live',saving:'Saving…',error:'Error',connecting:'…'}[s]||'…';
-}
-let toastT=null;
-function showToast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');if(toastT)clearTimeout(toastT);toastT=setTimeout(()=>el.classList.remove('show'),2800)}
-
-/* Boot */
-initSB();checkExisting();
-try{const s=localStorage.getItem('cu');if(s)ni.value=s}catch(e){}
-</script>
+  <script src="script.js"></script>
 </body>
 </html>
